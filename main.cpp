@@ -13,7 +13,7 @@ extern void stitchVoxels(char* volume);
 extern void hollow(char* volume);
 extern void makeStl(char* volume);
 Camera cam(1);
-int MAXX = 100, MAXY = 77, MAXZ = 77;//octree
+int MAXX = 200, MAXY = 200, MAXZ = 200;//octree
 
 int main(){
 	startWindowThread();
@@ -29,7 +29,7 @@ int main(){
 		}
 
 		cam.grabFrame();
-		while(cam.dataThreadLock){}
+//FIXME		while(cam.dataThreadLock){}
 		cam.dataThreadLock = 1;
 		cam.processFrame();
 		GaussianBlur(cam.data, cam.data, Size(21,21), 0, 0);
@@ -43,8 +43,8 @@ int main(){
 void* frameCapture(void *null){
 	double FOV = 1.3;
 	double VERT_FOV = 0.7;
-	int distToCenter = 150;//500
-	double interval = M_PI/2;
+	int distToCenter = 300;//500
+	double interval = M_PI/4;
 	char *view = (char*)calloc(cam.width*cam.height, sizeof(char));
 	char *volume = (char*)calloc(MAXX*MAXY*MAXZ, sizeof(char));
 	memset(volume, '+', MAXX*MAXY*MAXZ);
@@ -58,7 +58,7 @@ void* frameCapture(void *null){
 
 		printf("Press enter when oriented to %.2lf degrees\n", angle*180/M_PI);
 		getchar();
-//FIXME		while(cam.dataThreadLock){}
+		while(cam.dataThreadLock){}
 		cam.dataThreadLock = 1;
 		for(int x = 0; x < cam.width; x++){
 			for(int y = 0; y < cam.height; y++){
@@ -90,7 +90,7 @@ void* frameCapture(void *null){
 	hollow(volume);
 	puts("Model Hollowed.");
 	puts("Writing to file...");
-	FILE* fp = fopen("output.txt", "w");
+	FILE* fp = fopen("output.dat", "w");
 	fwrite(volume, sizeof(char), MAXX*MAXY*MAXZ, fp);
 	fclose(fp);
 	puts("Written to file.");

@@ -30,6 +30,9 @@ void drawLine(char* volume, int x1, int y1, int z1, int x2, int y2, int z2){
         	temp = y1;
         	y1 = y2;
         	y2 = temp;
+		temp = z1;
+		z1 = z2;
+		z2 = temp;
         }
         double slope = (double)(y2-y1)/(double)(x2-x1);
         int sign = 1;
