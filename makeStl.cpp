@@ -92,7 +92,7 @@ void makeZFace(tri* d, int x, int y, int z, int d1, int d2){
 	d[1].p3[2]=z;
 }
 void makeStl(char* volume){
-	int size = 80+4+sizeof(tri)*500000;
+	int size = 80+4+sizeof(tri)*1600000;
 	char *stl = (char*)calloc(size, 1);
 	
 
