@@ -13,7 +13,7 @@ int distToCenter = 550/2;
 int frames = 4;
 Voxtree volume(160/2);
 int rayDist;//absolute longest a ray has to travel.
-Camera cam(1);
+Camera cam(0);
 bool stillCapturing = true;
 
 void* frameCapture(void *null);

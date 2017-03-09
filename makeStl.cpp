@@ -92,43 +92,57 @@ void makeZFace(tri* d, int x, int y, int z, int d1, int d2){
 	d[1].p3[2]=z;
 }
 void makeStl(){
-	int size = 80+4+sizeof(tri)*1600000;
-	char *stl = (char*)calloc(size, 1);
-	
-
+	int triStep = 100;
+	int size = 84+triStep*sizeof(tri);
+	int memTriLeft = 100;
+	char *stl = (char*)malloc(size);
 	uint32_t triCount = 0;
 	tri *data = (tri*)(stl+84);
-        for(int x = 1; x < volume.size-1; x++){
-        for(int y = 1; y < volume.size-1; y++){
-        for(int z = 1; z < volume.size-1; z++){
-        if(volume.get(x, y, z) != 1){
-        	continue;
-        }
-		if(volume.get(x+1, y, z) == 0){
-			makeXFace(&(data[triCount]), x+1, y, z, 0, 1);
-			triCount+=2;
+    for(int x = 1; x < volume.size-1; x++){
+		for(int y = 1; y < volume.size-1; y++){
+			for(int z = 1; z < volume.size-1; z++){
+				if(volume.get(x, y, z) != 1){
+					continue;
+				}
+				if(volume.get(x+1, y, z) == 0){
+					makeXFace(&(data[triCount]), x+1, y, z, 0, 1);
+					triCount+=2;
+					memTriLeft-=2;
+				}
+				if(volume.get(x-1, y, z) == 0){
+					makeXFace(&(data[triCount]), x, y, z, 1, 0);
+					triCount+=2;
+					memTriLeft-=2;
+				}
+				if(volume.get(x, y+1, z) == 0){
+					makeYFace(&(data[triCount]), x, y+1, z, 0, 1);
+					triCount+=2;
+					memTriLeft-=2;
+				}
+				if(volume.get(x, y-1, z) == 0){
+					makeYFace(&(data[triCount]), x, y, z, 1, 0);
+					triCount+=2;
+					memTriLeft-=2;
+				}
+				if(volume.get(x, y, z+1) == 0){
+					makeZFace(&(data[triCount]), x, y, z+1, 0, 1);
+					triCount+=2;
+					memTriLeft-=2;
+				}
+				if(volume.get(x, y, z-1) == 0){
+					makeZFace(&(data[triCount]), x, y, z, 1, 0);
+					triCount+=2;
+					memTriLeft-=2;
+				}
+				if(memTriLeft < triStep/2){
+					memTriLeft+=triStep;
+					size+=triStep*sizeof(tri);
+					stl = (char*)realloc(stl, size);
+					data = (tri*)(stl+84);
+				}
+			}
 		}
-		if(volume.get(x-1, y, z) == 0){
-			makeXFace(&(data[triCount]), x, y, z, 1, 0);
-			triCount+=2;
-		}
-		if(volume.get(x, y+1, z) == 0){
-			makeYFace(&(data[triCount]), x, y+1, z, 0, 1);
-			triCount+=2;
-		}
-		if(volume.get(x, y-1, z) == 0){
-			makeYFace(&(data[triCount]), x, y, z, 1, 0);
-			triCount+=2;
-		}
-		if(volume.get(x, y, z+1) == 0){
-			makeZFace(&(data[triCount]), x, y, z+1, 0, 1);
-			triCount+=2;
-		}
-		if(volume.get(x, y, z-1) == 0){
-			makeZFace(&(data[triCount]), x, y, z, 1, 0);
-			triCount+=2;
-		}
-	}}}
+	}
 	printf("%d/%ld triangles\n", triCount, (size-84)/sizeof(tri));
 	*((uint32_t*)(stl+80)) = triCount;
 	FILE* stlfp = fopen("output.stl", "w");
