@@ -15,6 +15,10 @@ Camera::Camera(int idx){
 	width = data.size().width;
 	height = data.size().height;
 }
+void Camera::deleteFeed(){
+	destroyWindow(winName);
+	cam.release();
+}
 void Camera::showDark(){
 	for(int x = 0; x < width; x++){
 		for(int y = 0; y < height; y++){

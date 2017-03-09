@@ -5,6 +5,7 @@ using namespace cv;
 class Camera{
 public:
 	Camera(int idx);
+	void deleteFeed();
 	char winName[80];
 	//writes camera output to internal frame storage.
 	void processFrame();
@@ -13,7 +14,6 @@ public:
 	void showDark();
 	int darkThreshold = 50;
 	Mat data;
-	int dataThreadLock = 0;
 	Mat drawData;
 	int width, height;
 	void drawCross(int x, int y, int r, int g, int b);

@@ -9,17 +9,17 @@ using namespace cv;
 
 double FOV = 0.976;
 double VERT_FOV = 0.523;
-int distToCenter = 550*1.25;
-int frames = 8;
-Voxtree volume(160*1.25);
+int distToCenter = 550/2;
+int frames = 4;
+Voxtree volume(160/2);
 int rayDist;//absolute longest a ray has to travel.
 Camera cam(1);
+bool stillCapturing = true;
 
 void* frameCapture(void *null);
-void norm(double* vec);
 
 extern void makeStl();
-void* frameProcess(void *null);
+void frameProcess(char* view, double angle);
 
 int main(){
 	rayDist = sqrt(3*volume.size*volume.size)*0.5+distToCenter;
@@ -28,7 +28,7 @@ int main(){
 	pthread_t frameCapThread;
 	pthread_create(&frameCapThread, NULL, frameCapture, NULL);
 	int periodic = 0;
-	while(true){
+	while(stillCapturing){
 		delay(FRAMERATE);
 		periodic++;
 		if(periodic == FRAMERATE){
@@ -37,44 +37,41 @@ int main(){
 		}
 
 		cam.grabFrame();
-		while(cam.dataThreadLock){}
-		cam.dataThreadLock = 1;
-		cam.processFrame();
+		cam.processFrame();//FIXME semaphores
 		GaussianBlur(cam.data, cam.data, Size(11,11), 0, 0);
 //		medianBlur(cam.data, cam.data, 7);
-		cam.dataThreadLock = 0;
 		cam.showDark();
 		cam.drawCross(cam.width/2, cam.height/2, 255, 0, 255);
 		imshow(cam.winName, cam.drawData);
 	}
+	cam.deleteFeed();
+	pthread_join(frameCapThread, NULL);
 }
 
 void* frameCapture(void *null){
-	volume = (char*)calloc(MAXX*MAXY*MAXZ, sizeof(char));
-	memset(volume, '+', MAXX*MAXY*MAXZ);
-	pthread_t frameProcThread[frames];
+	char *(view[frames]);
 	for(int frameIdx = 0; frameIdx < frames; frameIdx++){
+
+		view[frameIdx] = (char*)calloc(cam.width*cam.height, sizeof(char));
+		for(int x = 0; x < cam.width; x++){
+			for(int y = 0; y < cam.height; y++){
+				view[frameIdx][x+y*cam.width] = (cam.getBrightness(x, y) < cam.darkThreshold)? 0 : 1;//if below threshold then save 0, else 1
+			}
+		}
 		double angle = frameIdx*2*M_PI/frames;
 		printf("Press enter when oriented to %.2lf degrees\n", angle*180/M_PI);
 		getchar();
-		pthread_create(&(frameProcThread[frameIdx]), NULL, frameProcess, &angle);
 	}
-	while(volumeDataLock){}
-	puts("Writing to file...");
-	FILE* fp = fopen("output.dat", "w");
-	fwrite(volume, sizeof(char), MAXX*MAXY*MAXZ, fp);
-	fclose(fp);
-	puts("Written to file.");
+	stillCapturing = false;
+	for(int frameIdx = 0; frameIdx < frames; frameIdx++){
+		double angle = frameIdx*2*M_PI/frames;
+		frameProcess(view[frameIdx], angle);
+		printf("Frame %d complete!\n", frameIdx);
+		printf("DataSize is %d\nWould be %d oldstyle\n", volume.dataSize(), volume.size*volume.size*volume.size);
+	}
 	puts("Creating STL.");
-	makeStl(volume);
+	makeStl();
 	puts("STL Created.");
-	free(volume);
 	return NULL;
-}
-void norm(double* vec){
-        double dist = sqrt(vec[0]*vec[0]+vec[1]*vec[1]+vec[2]*vec[2]);
-        vec[0]/=dist;
-        vec[1]/=dist;
-        vec[2]/=dist;
 }
       

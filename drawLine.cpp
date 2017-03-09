@@ -1,17 +1,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include "voxtree.h"
 //some weird bastard of a line drawing algo. Almost bresenham but with z spliced in in a strange and terrible way.
-extern int MAXX, MAXY, MAXZ;
-extern char* volume;
-extern int idx(int x, int y, int z);
+extern Voxtree volume;
 void drawPt(int x, int y, int z){
-	x+=MAXX/2;
-	y+=MAXY/2;
-	z+=MAXZ/2;//so that build volume centers on origin.
-	if(x >=0 && x < MAXX && y >= 0 && y < MAXY && z >= 0 && z < MAXZ){
-		volume[idx(x, y, z)] = '_';
-	}
+	x+=volume.size/2;//FIXME should be stored somewhere.
+	y+=volume.size/2;
+	z+=volume.size/2;//so that build volume centers on origin.
+	volume.rm(x, y, z);
 }
 void drawLine(int x1, int y1, int z1, int x2, int y2, int z2){
 	int rotated = 0;
