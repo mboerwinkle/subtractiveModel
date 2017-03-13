@@ -7,6 +7,8 @@ public:
 	Camera(int idx);
 	void deleteFeed();
 	char winName[80];
+double FOV = 0.976;//FIXME delete
+double VERT_FOV = 0.523;
 	//writes camera output to internal frame storage.
 	void processFrame();
 	//Quickly grabs the next frame...
@@ -22,6 +24,7 @@ public:
 	int getGreen(int x, int y);
 	int getComp(int x, int y, char c);
 	int getBrightness(int x, int y);
+	void getVec(double angle, double x, double y, double* out);
 private:
 	cv::VideoCapture cam;
 };

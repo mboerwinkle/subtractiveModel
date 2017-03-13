@@ -62,6 +62,15 @@ int Camera::getComp(int x, int y, char c){
 int Camera::getBrightness(int x, int y){
 	return (getRed(x, y)+getBlue(x, y)+getGreen(x, y))/3;
 }
+void Camera::getVec(double angle, double x, double y, double* out){
+	double loc[2] = {x/width-0.5, y/height-0.5};//location of the point on the view screen.
+	double dirAngle = loc[0]*FOV;//angle from camera forwards
+	double dirPitch = loc[1]*VERT_FOV;//angle upwards from camera forwards
+	double finalAngle = angle+M_PI+dirAngle;//absolute angle
+	out[0] = cos(finalAngle)*cos(dirPitch);
+	out[1] = sin(finalAngle)*cos(dirPitch);
+	out[2] = sin(dirPitch);//absolute point direction vector
+}
 
 void Camera::processFrame(){
 	cam.retrieve(data);

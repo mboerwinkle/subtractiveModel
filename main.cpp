@@ -6,12 +6,9 @@
 #include "delay.h"
 using namespace cv;
 #define FRAMERATE 60
-
-double FOV = 0.976;
-double VERT_FOV = 0.523;
-int distToCenter = 3520;
+int distToCenter = 3520/8;
 int frames = 4;
-Voxtree volume(1024);
+Voxtree volume(1024/8);
 int rayDist;//absolute longest a ray has to travel.
 Camera cam(1);
 bool stillCapturing = true;
@@ -73,5 +70,11 @@ void* frameCapture(void *null){
 	makeStl();
 	puts("STL Created.");
 	return NULL;
+}
+void norm(double* v){
+	double d = sqrt(v[0]*v[0]+v[1]*v[1]+v[2]*v[2]);
+	v[0]/=d;
+	v[1]/=d;
+	v[2]/=d;
 }
       
