@@ -45,20 +45,23 @@ int Voxnode::deleteLineIntersections(int x, int y, int z, double* v){
 	if(type == 1){
 		if(size == 1){
 			return 1;
-		}	
+		}
 		type = 0;
-		for(int quadIdx = 0; quadIdx < 8; quadIdx++){
-			sub[quadIdx] = new Voxnode(size/2);
+		if(size == 2){
+			for(int quadIdx = 0; quadIdx < 8; quadIdx++){
+				sub[quadIdx] = 1;
+			}
+		}else{
+			for(int quadIdx = 0; quadIdx < 8; quadIdx++){
+				sub[quadIdx] = new Voxnode(size/2);
+			}
 		}
 	}
 	int nx, ny, nz;
 	bool good = false;
 	for(int quadIdx = 0; quadIdx < 8; quadIdx++){
 		if(sub[quadIdx] == NULL) continue;
-		nx = x;
-		ny = y;
-		nz = z;
-		quadCoordTrans(quadIdx, &nx, &ny, &nz);
+		quadCoordTrans(quadIdx, x, y, z, &nx, &ny, &nz);
 		if(sub[quadIdx]->deleteLineIntersections(nx, ny, nz, v)){
 			delete sub[quadIdx];
 			sub[quadIdx] = NULL;//FIXME needed?
@@ -96,11 +99,11 @@ int Voxnode::get(int x, int y, int z){
 	if(sub[quad] == NULL){
 		return 0;
 	}
-	quadCoordTrans(quad, &x, &y, &z);//transform to child coordinate range.
+	quadCoordTrans(quad, x, y, z, &x, &y, &z);//transform to child coordinate range.
 	return sub[quad]->get(x, y, z);
 	
 }
-int Voxnode::rm(int x, int y, int z){//FIXME level 0 nodes not use pointer memory.
+/*int Voxnode::rm(int x, int y, int z){//FIXME level 0 nodes not use pointer memory.
 	if(x > size || y > size || z > size){//FIXME remove once final
 		printf("Fatal Error! rm out of bounds. %d %d %d %d\n", x, y, z, size);
 	}
@@ -117,7 +120,7 @@ int Voxnode::rm(int x, int y, int z){//FIXME level 0 nodes not use pointer memor
 	if(sub[quad] == NULL){
 		return 0;//already removed.
 	}
-	quadCoordTrans(quad, &x, &y, &z);
+	quadCoordTrans(quad, x, y, z, &x, &y, &z);
 	if(sub[quad]->rm(x, y, z)){
 		delete sub[quad];
 		sub[quad] = NULL;//FIXME needed?
@@ -133,7 +136,7 @@ int Voxnode::rm(int x, int y, int z){//FIXME level 0 nodes not use pointer memor
 		return 1;
 	}
 	return 0;
-}
+}*/
 int Voxnode::dataSize(){
 	if(type == 1) return sizeof(Voxnode);
 	int totalDataSize = sizeof(Voxnode);
@@ -144,39 +147,39 @@ int Voxnode::dataSize(){
 	}
 	return totalDataSize;
 }
-void Voxnode::quadCoordTrans(int quad, int* x, int* y, int* z){//FIXME more efficient. precoded values?
+void Voxnode::quadCoordTrans(int quad, int x, int y, int z, int* ox, int* oy, int* oz){//FIXME more efficient. precoded values?
 	if(quad<4){
 		if(quad < 2){
 			if(quad == 0){
 //0
 			}else{
-				*z-=size/2;
+				*oz=z-size/2;
 //1
 			}
 		}else{
-			*y-=size/2;
+			*oy=y-size/2;
 			if(quad == 2){
 //2
 			}else{
-				*z-=size/2;
+				*oz=z-size/2;
 //3
 			}
 		}
 	}else{
-		*x-=size/2;
+		*ox=x-size/2;
 		if(quad < 6){
 			if(quad == 4){
 //4
 			}else{
-				*z-=size/2;
+				*oz=z-size/2;
 //5
 			}
 		}else{
-			*y-=size/2;
+			*oy=y-size/2;
 			if(quad == 6){
 //6
 			}else{
-				*z-=size/2;
+				*oz=z-size/2;
 //7
 			}
 		}

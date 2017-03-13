@@ -26,7 +26,6 @@ void frameProcess(char* view, double angle){
 						double dirPitch = loc[1]*VERT_FOV;//angle upwards from camera forwards
 						double finalAngle = angle+M_PI+dirAngle;//absolute angle
 						double vec[3] = {cos(finalAngle)*cos(dirPitch),sin(finalAngle)*cos(dirPitch),sin(dirPitch)};//absolute point direction vector
-					//	drawLine(camPosX, camPosY, camPosZ, camPosX+vec[0]*rayDist, camPosY+vec[1]*rayDist, camPosZ+vec[2]*rayDist);
 						volume.deleteLineIntersections(camPosX+volume.size/2, camPosY+volume.size/2, camPosZ+volume.size/2, vec);
 					}
 				}

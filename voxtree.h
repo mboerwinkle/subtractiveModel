@@ -21,9 +21,9 @@ public:
 	int size;
 	char type = 1;//1 is filled. 0 is partial.
 	int get(int x, int y, int z);
-	int rm(int x, int y, int z);
+//	int rm(int x, int y, int z);
 	int quadrant(int x, int y, int z);
-	void quadCoordTrans(int quad, int* x, int* y, int* z);
+	void quadCoordTrans(int quad, int x, int y, int z, int* ox, int* oy, int* oz);
 	int deleteLineIntersections(int x, int y, int z, double *v);
 	int lineIntersects(int x, int y, int z, double* v);
 private:

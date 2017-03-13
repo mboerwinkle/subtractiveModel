@@ -9,11 +9,11 @@ using namespace cv;
 
 double FOV = 0.976;
 double VERT_FOV = 0.523;
-int distToCenter = 550/2;
+int distToCenter = 3520;
 int frames = 4;
-Voxtree volume(160/2);
+Voxtree volume(1024);
 int rayDist;//absolute longest a ray has to travel.
-Camera cam(0);
+Camera cam(1);
 bool stillCapturing = true;
 
 void* frameCapture(void *null);
