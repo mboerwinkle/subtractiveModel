@@ -6,7 +6,7 @@ extern Camera cam;
 extern Voxtree volume;
 extern double FOV, VERT_FOV;//FIXME make attribute of camera
 extern int distToCenter;
-extern int rayDist;
+//extern int rayDist;
 extern void drawLine(int x1, int y1, int z1, int x2, int y2, int z2);
 void frameProcess(char* view, double angle){
 	int camPosX = cos(angle)*distToCenter;
@@ -18,11 +18,10 @@ void frameProcess(char* view, double angle){
 				double vec1[3], vec2[3];
 				cam.getVec(angle, (double)x+0.5, (double)y+0.5, vec1);
 				cam.getVec(angle, (double)x-0.5, (double)y-0.5, vec2);
-			//	volume.deletePyramidIntersections(camPosX+volume.size/2, camPosY+volume.size/2, camPosZ+volume.size/2, vec1, vec2);
-				volume.deleteLineIntersections(camPosX+volume.size/2, camPosY+volume.size/2, camPosZ+volume.size/2, vec1);
+				volume.deletePyramidIntersections(camPosX+volume.size/2, camPosY+volume.size/2, camPosZ+volume.size/2, vec1, vec2);
 			}
 		}
-		printf("Done with X %d\n", x);
+		//printf("Done with X %d\n", x);
 	}
 	free(view);
 }

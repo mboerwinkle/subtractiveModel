@@ -146,7 +146,7 @@ void makeStl(){
 	printf("%d/%ld triangles\n", triCount, (size-84)/sizeof(tri));
 	*((uint32_t*)(stl+80)) = triCount;
 	FILE* stlfp = fopen("output.stl", "w");
-	fwrite(stl, 1, size, stlfp);
+	fwrite(stl, 1, 84+triCount*sizeof(tri), stlfp);
 	fclose(stlfp);
 	free(stl);
 }

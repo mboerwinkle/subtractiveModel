@@ -6,7 +6,6 @@ class Voxtree{
 public:
 	Voxtree(int size);
 	int get(int x, int y, int z);
-	int dataSize();
 	int size;
 	void deleteLineIntersections(int x, int y, int z, double *v);
 	void deletePyramidIntersections(int x, int y, int z, double *v1, double *v2);
@@ -17,7 +16,6 @@ class Voxnode{
 public:
 	Voxnode(int size);
 	~Voxnode();
-	int dataSize();
 	int size;
 	char type = 1;//1 is filled. 0 is partial.
 	int get(int x, int y, int z);

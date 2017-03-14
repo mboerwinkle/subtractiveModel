@@ -5,11 +5,12 @@
 #include "voxtree.h"
 #include "delay.h"
 using namespace cv;
+extern int totalNodeCount;
+extern int peakNodeCount;
 #define FRAMERATE 60
-int distToCenter = 3520/8;
-int frames = 4;
-Voxtree volume(1024/8);
-int rayDist;//absolute longest a ray has to travel.
+int distToCenter = 3520/4;
+int frames = 1;
+Voxtree volume(1024/4);
 Camera cam(1);
 bool stillCapturing = true;
 
@@ -19,8 +20,6 @@ extern void makeStl();
 void frameProcess(char* view, double angle);
 
 int main(){
-	rayDist = sqrt(3*volume.size*volume.size)*0.5+distToCenter;
-
 	startWindowThread();
 	pthread_t frameCapThread;
 	pthread_create(&frameCapThread, NULL, frameCapture, NULL);
@@ -64,8 +63,9 @@ void* frameCapture(void *null){
 		double angle = frameIdx*2*M_PI/frames;
 		frameProcess(view[frameIdx], angle);
 		printf("Frame %d complete!\n", frameIdx);
-		printf("DataSize is %d\nWould be %d oldstyle\n", volume.dataSize(), volume.size*volume.size*volume.size);
+		printf("Node Count is %d\n", totalNodeCount);
 	}
+	printf("Peak Node Count is %d\n", peakNodeCount);
 	puts("Creating STL.");
 	makeStl();
 	puts("STL Created.");

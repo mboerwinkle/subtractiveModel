@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "voxtree.h"
+int totalNodeCount = 0;
+int peakNodeCount = 0;
 extern void norm(double* v);
 Voxtree::Voxtree(int size){
 	int realSize = 1;
@@ -19,17 +21,24 @@ void Voxtree::deletePyramidIntersections(int x, int y, int z, double *v1, double
 }
 int Voxtree::get(int x, int y, int z){
 	if(x >= size || x < 0 || y >= size || y < 0 || z >= size || z < 0){
+		puts("get out of bounds");
 		return 0;
 	}
 	return root->get(x, y, z);
 }
-int Voxtree::dataSize(){
-	return root->dataSize();
-}
 Voxnode::Voxnode(int size){
+//	if(size > 1){
+		totalNodeCount++;
+		if(totalNodeCount > peakNodeCount){
+			peakNodeCount = totalNodeCount;
+		}
+	//}
 	this->size = size;
 }
 Voxnode::~Voxnode(){
+//	if(size > 1){
+		totalNodeCount--;
+	//}
 	for(int quadIdx = 0; quadIdx < 8; quadIdx++){
 		if(sub[quadIdx] != (Voxnode*)NULL){
 			puts("all nodes should be freed by the time of deletion!");
@@ -136,20 +145,21 @@ int Voxnode::lineIntersects(int x, int y, int z, double* v){
 		if(v[s] == 0) continue;
 		double tInit = -(double)c[s]/v[s];
 		double tFinal = (double)(size-c[s])/v[s];
-		int init1 = v[(s+1)%3]*tInit+c[(s+1)%3];
-		int final1 = v[(s+1)%3]*tFinal+c[(s+1)%3];
-		int init2 = v[(s+2)%3]*tInit+c[(s+2)%3];
-		int final2 = v[(s+2)%3]*tFinal+c[(s+2)%3];
+		double init1 = v[(s+1)%3]*tInit+c[(s+1)%3];
+		double final1 = v[(s+1)%3]*tFinal+c[(s+1)%3];
+		double init2 = v[(s+2)%3]*tInit+c[(s+2)%3];
+		double final2 = v[(s+2)%3]*tFinal+c[(s+2)%3];
 		if( ((init1 < size && init1 >= 0) && (init2 < size && init2 >= 0)) || ((final1 < size && final1 >= 0) && (final2 < size && final2 >= 0))){
 			return 1;
 		}
 	}
 	return 0;
 }
-/*
+
 int Voxnode::get(int x, int y, int z){//works with bottom nodes stored as 1 or 0.
-	if(x > size || y > size || z > size){//FIXME remove once final
-		puts("Fatal Error! get out of bounds.");
+	if(x >= size || x < 0 || y >= size || y < 0 || z >= size || z < 0){
+		puts("get out of bounds");
+		return 0;
 	}
 	int quad = quadrant(x, y, z);
 	if(type == 1) return 1;//if it is filled, it exists
@@ -158,35 +168,11 @@ int Voxnode::get(int x, int y, int z){//works with bottom nodes stored as 1 or 0
 	quadCoordTrans(quad, x, y, z, &x, &y, &z);//transform to child coordinate range.
 	return sub[quad]->get(x, y, z);//otherwise, check the child
 	
-}*/
-
-int Voxnode::get(int x, int y, int z){//FIXME replace with new version above.
-	if(x > size || y > size || z > size){//FIXME remove once final
-		puts("Fatal Error! get out of bounds.");
-	}
-	if(type == 1){
-		return 1;
-	}
-	int quad = quadrant(x, y, z);
-	if(sub[quad] == NULL){
-		return 0;
-	}
-	quadCoordTrans(quad, x, y, z, &x, &y, &z);//transform to child coordinate range.
-	return sub[quad]->get(x, y, z);
-	
-}
-
-int Voxnode::dataSize(){
-	if(type == 1) return sizeof(Voxnode);
-	int totalDataSize = sizeof(Voxnode);
-	for(int quadIdx = 0; quadIdx < 8; quadIdx++){
-		if(sub[quadIdx] != NULL){
-			totalDataSize+=sub[quadIdx]->dataSize();
-		}
-	}
-	return totalDataSize;
 }
 void Voxnode::quadCoordTrans(int quad, int x, int y, int z, int* ox, int* oy, int* oz){//FIXME more efficient. precoded values?
+	*ox = x;//fuck me. Forgot this and got fractal behavior.
+	*oy = y;
+	*oz = z;
 	if(quad<4){
 		if(quad < 2){
 			if(quad == 0){
