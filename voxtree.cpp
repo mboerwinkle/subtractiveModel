@@ -142,14 +142,14 @@ int Voxnode::pyramidIntersects(int x, int y, int z, double* v1, double* v2){
 int Voxnode::lineIntersects(int x, int y, int z, double* v){
 	int c[3] = {x, y, z};
 	for(int s = 0; s < 3; s++){//start orientation
-		if(v[s] == 0) continue;
+		if(v[s] == 0) continue;//fixme bad behavior at horizontal?
 		double tInit = -(double)c[s]/v[s];
 		double tFinal = (double)(size-c[s])/v[s];
 		double init1 = v[(s+1)%3]*tInit+c[(s+1)%3];
 		double final1 = v[(s+1)%3]*tFinal+c[(s+1)%3];
 		double init2 = v[(s+2)%3]*tInit+c[(s+2)%3];
 		double final2 = v[(s+2)%3]*tFinal+c[(s+2)%3];
-		if( ((init1 < size && init1 >= 0) && (init2 < size && init2 >= 0)) || ((final1 < size && final1 >= 0) && (final2 < size && final2 >= 0))){
+		if( ((init1 <= size && init1 >= 0) && (init2 <= size && init2 >= 0)) || ((final1 <= size && final1 >= 0) && (final2 <= size && final2 >= 0))){
 			return 1;
 		}
 	}
