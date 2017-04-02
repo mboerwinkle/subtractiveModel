@@ -1,9 +1,17 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 #include "voxtree.h"
 int totalNodeCount = 0;
 int peakNodeCount = 0;
 extern void norm(double* v);
+extern void cross(double* tv, double* v1, double* v2);
+extern double dot(double* v1, double* v2);
+
+typedef struct plane{
+	double normal[3];
+	double offset;
+}plane;
 Voxtree::Voxtree(int size){
 	int realSize = 1;
 	while(realSize < size){
@@ -16,8 +24,8 @@ Voxtree::Voxtree(int size){
 void Voxtree::deleteLineIntersections(int x, int y, int z, double *v){
 	root->deleteLineIntersections(x, y, z, v);
 }
-void Voxtree::deletePyramidIntersections(int x, int y, int z, double *v1, double *v2){
-	root->deletePyramidIntersections(x, y, z, v1, v2);
+void Voxtree::deletePyramidIntersections(int x, int y, int z, double **v){
+	root->deletePyramidIntersections(x, y, z, v);
 }
 int Voxtree::get(int x, int y, int z){
 	if(x >= size || x < 0 || y >= size || y < 0 || z >= size || z < 0){
@@ -45,8 +53,8 @@ Voxnode::~Voxnode(){
 		}
 	}
 }
-int Voxnode::deletePyramidIntersections(int x, int y, int z, double *v1, double *v2){
-	if(!pyramidIntersects(x, y, z, v1, v2)){
+int Voxnode::deletePyramidIntersections(int x, int y, int z, double **v){
+	if(!pyramidIntersects(x, y, z, v)){
 		return 0;
 	}
 	if(type == 1){
@@ -69,7 +77,7 @@ int Voxnode::deletePyramidIntersections(int x, int y, int z, double *v1, double 
 	for(int quadIdx = 0; quadIdx < 8; quadIdx++){
 		if(sub[quadIdx] == NULL) continue;
 		quadCoordTrans(quadIdx, x, y, z, &nx, &ny, &nz);
-		if(sub[quadIdx]->deletePyramidIntersections(nx, ny, nz, v1, v2)){
+		if(sub[quadIdx]->deletePyramidIntersections(nx, ny, nz, v)){
 			delete sub[quadIdx];
 			sub[quadIdx] = NULL;//FIXME needed?
 		}else good = true;
@@ -113,25 +121,50 @@ int Voxnode::deleteLineIntersections(int x, int y, int z, double* v){
 	}
 	return 0;
 }
-int Voxnode::pyramidIntersects(int x, int y, int z, double* v1, double* v2){
-	double v3[3] = {v1[0], v1[1], v2[2]};
-	double v4[3] = {v2[0], v2[1], v1[2]};
-	double *(v[4]) = {v1, v2, v3, v4};
+bool pointIsInsidePyramid(int x, int y, int z, plane* walls){
+	double v[3] = {(double)x, (double)y, (double)z};//fixme normalize directly from int.
+	norm(v);
+	bool intersects = true;
+	for(int wall = 0; wall < 4; wall++){
+//		printf("%d %d %d %lf\n", x, y, z, dot(walls[wall].normal, v));
+		if(dot(walls[wall].normal, v)>=0){
+			intersects = false;
+			break;
+			//fixme early exit
+		}
+	}
+	if(intersects){
+		return true;
+	}
+	return false;
+}
+int Voxnode::pyramidIntersects(int x, int y, int z, double** v){
 	for(int i = 0; i < 4; i++){//if one of the four pyramid rays intersects
 		if(lineIntersects(x, y, z, v[i])) return 1;
 	}
+	plane walls[4];
+	for(int idx = 0; idx < 4; idx++){
+		cross(walls[idx].normal, v[idx], v[(idx+1)%4]);
+		norm(walls[idx].normal);//FIXME needed?
+/*		if(idx == 0) puts("right");
+		if(idx == 1) puts("top");
+		if(idx == 2) puts("left");
+		if(idx == 3) puts("bottom");
+		printf("%lf %lf %lf\n", walls[idx].normal[0], walls[idx].normal[1], walls[idx].normal[2]);
+*/
+	}
+
 	//or one of the eight points is inside of the pyramid
-	double pv[3];//point vector. The vector from the camera to each of the eight corners.
 	for(int tx = 0; tx < 2; tx++){//FIXME rework
-		pv[0] = -x+tx*size;
+		double px = -x+tx*size;
 		for(int ty = 0; ty < 2; ty++){
-			pv[1] = -y+ty*size;
+			double py = -y+ty*size;
 			for(int tz = 0; tz < 2; tz++){
-				pv[2] = -z+tz*size;
-				norm(pv);
-				if(((pv[0]>=v1[0]&&pv[0]<=v2[0])||(pv[0]<=v1[0]&&pv[0]>=v2[0]))
-				 && ((pv[1]>=v1[1]&&pv[1]<=v2[1])||(pv[1]<=v1[1]&&pv[1]>=v2[1]))
-				 && ((pv[2]>=v1[2]&&pv[2]<=v2[2])||(pv[2]<=v1[2]&&pv[2]>=v2[2]))){//pv is between the two vectors
+				double pz = -z+tz*size;
+				if(pointIsInsidePyramid(px, py, pz, walls)){
+					if(size > 1){
+			//			printf("size: %d\n", size);
+					}
 					return 1;
 				}
 			}

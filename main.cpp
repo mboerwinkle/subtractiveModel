@@ -8,9 +8,10 @@ using namespace cv;
 extern int totalNodeCount;
 extern int peakNodeCount;
 #define FRAMERATE 60
-int distToCenter = 3520/4;
-int frames = 16;
-Voxtree volume(1024/4);
+int distToCenter = 3520/2;
+int frames = 32;
+int ProgressX = 0;
+Voxtree volume(1024/2);
 Camera cam(1);
 bool stillCapturing = true;
 
@@ -41,7 +42,12 @@ int main(){
 		imshow(cam.winName, cam.drawData);
 	}
 	cam.deleteFeed();
-	pthread_join(frameCapThread, NULL);
+	while(true){
+		getchar();
+		printf("feed x coord:%d\n", ProgressX);
+		
+	}
+//	pthread_join(frameCapThread, NULL);
 }
 
 void* frameCapture(void *null){
@@ -76,5 +82,13 @@ void norm(double* v){
 	v[0]/=d;
 	v[1]/=d;
 	v[2]/=d;
+}
+void cross(double* tv, double* v1, double* v2){//FIXME aliases? inline them?
+	tv[0] = v1[1]*v2[2]-v1[2]*v2[1];
+	tv[1] = v1[2]*v2[0]-v1[0]*v2[2];
+	tv[2] = v1[0]*v2[1]-v1[1]*v2[0];
+}
+double dot(double* v1, double* v2){
+	return v1[0]*v2[0]+v1[1]*v2[1]+v1[2]*v2[2];
 }
       

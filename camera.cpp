@@ -70,6 +70,7 @@ void Camera::getVec(double angle, double x, double y, double* out){
 	out[0] = cos(finalAngle)*cos(dirPitch);
 	out[1] = sin(finalAngle)*cos(dirPitch);
 	out[2] = sin(dirPitch);//absolute point direction vector
+//	printf("%lf\n", out[0]*out[0]+out[1]*out[1]+out[2]*out[2]);
 }
 
 void Camera::processFrame(){
