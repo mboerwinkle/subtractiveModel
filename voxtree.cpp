@@ -8,10 +8,7 @@ extern void norm(double* v);
 extern void cross(double* tv, double* v1, double* v2);
 extern double dot(double* v1, double* v2);
 
-typedef struct plane{
-	double normal[3];
-	double offset;
-}plane;
+
 Voxtree::Voxtree(int size){
 	int realSize = 1;
 	while(realSize < size){
@@ -25,7 +22,12 @@ void Voxtree::deleteLineIntersections(int x, int y, int z, double *v){
 	root->deleteLineIntersections(x, y, z, v);
 }
 void Voxtree::deletePyramidIntersections(int x, int y, int z, double **v){
-	root->deletePyramidIntersections(x, y, z, v);
+	plane walls[4];
+	for(int idx = 0; idx < 4; idx++){
+		cross(walls[idx].normal, v[idx], v[(idx+1)%4]);
+		norm(walls[idx].normal);//FIXME needed?
+	}
+	root->deletePyramidIntersections(x, y, z, v, walls);
 }
 int Voxtree::get(int x, int y, int z){
 	if(x >= size || x < 0 || y >= size || y < 0 || z >= size || z < 0){
@@ -53,8 +55,8 @@ Voxnode::~Voxnode(){
 		}
 	}
 }
-int Voxnode::deletePyramidIntersections(int x, int y, int z, double **v){
-	if(!pyramidIntersects(x, y, z, v)){
+int Voxnode::deletePyramidIntersections(int x, int y, int z, double** v, plane* walls){
+	if(!pyramidIntersects(x, y, z, v, walls)){
 		return 0;
 	}
 	if(type == 1){
@@ -62,22 +64,16 @@ int Voxnode::deletePyramidIntersections(int x, int y, int z, double **v){
 			return 1;
 		}
 		type = 0;
-/*		if(size == 2){
-			for(int quadIdx = 0; quadIdx < 8; quadIdx++){
-				sub[quadIdx] = 1;
-			}
-		}else{*/
-			for(int quadIdx = 0; quadIdx < 8; quadIdx++){
-				sub[quadIdx] = new Voxnode(size/2);
-			}
-//		}
+		for(int quadIdx = 0; quadIdx < 8; quadIdx++){
+			sub[quadIdx] = new Voxnode(size/2);
+		}
 	}
 	int nx, ny, nz;
 	bool good = false;
 	for(int quadIdx = 0; quadIdx < 8; quadIdx++){
 		if(sub[quadIdx] == NULL) continue;
 		quadCoordTrans(quadIdx, x, y, z, &nx, &ny, &nz);
-		if(sub[quadIdx]->deletePyramidIntersections(nx, ny, nz, v)){
+		if(sub[quadIdx]->deletePyramidIntersections(nx, ny, nz, v, walls)){
 			delete sub[quadIdx];
 			sub[quadIdx] = NULL;//FIXME needed?
 		}else good = true;
@@ -96,15 +92,9 @@ int Voxnode::deleteLineIntersections(int x, int y, int z, double* v){
 			return 1;
 		}
 		type = 0;
-/*		if(size == 2){
-			for(int quadIdx = 0; quadIdx < 8; quadIdx++){
-				sub[quadIdx] = 1;
-			}
-		}else{*/
 			for(int quadIdx = 0; quadIdx < 8; quadIdx++){
 				sub[quadIdx] = new Voxnode(size/2);
 			}
-//		}
 	}
 	int nx, ny, nz;
 	bool good = false;
@@ -123,14 +113,13 @@ int Voxnode::deleteLineIntersections(int x, int y, int z, double* v){
 }
 bool pointIsInsidePyramid(int x, int y, int z, plane* walls){
 	double v[3] = {(double)x, (double)y, (double)z};//fixme normalize directly from int.
-	norm(v);
+	norm(v);//needed?
 	bool intersects = true;
 	for(int wall = 0; wall < 4; wall++){
 //		printf("%d %d %d %lf\n", x, y, z, dot(walls[wall].normal, v));
 		if(dot(walls[wall].normal, v)>=0){
 			intersects = false;
 			break;
-			//fixme early exit
 		}
 	}
 	if(intersects){
@@ -138,22 +127,10 @@ bool pointIsInsidePyramid(int x, int y, int z, plane* walls){
 	}
 	return false;
 }
-int Voxnode::pyramidIntersects(int x, int y, int z, double** v){
+int Voxnode::pyramidIntersects(int x, int y, int z, double** v, plane* walls){
 	for(int i = 0; i < 4; i++){//if one of the four pyramid rays intersects
 		if(lineIntersects(x, y, z, v[i])) return 1;
 	}
-	plane walls[4];
-	for(int idx = 0; idx < 4; idx++){
-		cross(walls[idx].normal, v[idx], v[(idx+1)%4]);
-		norm(walls[idx].normal);//FIXME needed?
-/*		if(idx == 0) puts("right");
-		if(idx == 1) puts("top");
-		if(idx == 2) puts("left");
-		if(idx == 3) puts("bottom");
-		printf("%lf %lf %lf\n", walls[idx].normal[0], walls[idx].normal[1], walls[idx].normal[2]);
-*/
-	}
-
 	//or one of the eight points is inside of the pyramid
 	for(int tx = 0; tx < 2; tx++){//FIXME rework
 		double px = -x+tx*size;
@@ -178,7 +155,7 @@ int Voxnode::lineIntersects(int x, int y, int z, double* v){
 		if(v[s] == 0) continue;//fixme bad behavior at horizontal?
 		double tInit = -(double)c[s]/v[s];
 		double tFinal = (double)(size-c[s])/v[s];
-		double init1 = v[(s+1)%3]*tInit+c[(s+1)%3];
+		double init1 = v[(s+1)%3]*tInit+c[(s+1)%3];//inline?
 		double final1 = v[(s+1)%3]*tFinal+c[(s+1)%3];
 		double init2 = v[(s+2)%3]*tInit+c[(s+2)%3];
 		double final2 = v[(s+2)%3]*tFinal+c[(s+2)%3];
@@ -207,7 +184,7 @@ void Voxnode::quadCoordTrans(int quad, int x, int y, int z, int* ox, int* oy, in
 	*oy = y;
 	*oz = z;
 	if(quad<4){
-		if(quad < 2){
+		if(quad < 2){//fixme remove else statements
 			if(quad == 0){
 //0
 			}else{

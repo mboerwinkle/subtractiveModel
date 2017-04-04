@@ -9,7 +9,7 @@ extern int totalNodeCount;
 extern int peakNodeCount;
 #define FRAMERATE 60
 int distToCenter = 3520/2;
-int frames = 32;
+int frames = 12;
 int ProgressX = 0;
 Voxtree volume(1024/2);
 Camera cam(1);

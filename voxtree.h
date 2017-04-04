@@ -2,6 +2,10 @@
 #define VOXTREE_H
 class Voxtree;
 class Voxnode;
+typedef struct plane{
+	double normal[3];
+	double offset;
+}plane;
 class Voxtree{
 public:
 	Voxtree(int size);
@@ -22,9 +26,9 @@ public:
 	int quadrant(int x, int y, int z);
 	void quadCoordTrans(int quad, int x, int y, int z, int* ox, int* oy, int* oz);
 	int deleteLineIntersections(int x, int y, int z, double *v);
-	int deletePyramidIntersections(int x, int y, int z, double **v);
+	int deletePyramidIntersections(int x, int y, int z, double** v, plane* walls);
 	int lineIntersects(int x, int y, int z, double* v);
-	int pyramidIntersects(int x, int y, int z, double** v);
+	int pyramidIntersects(int x, int y, int z, double** v, plane* walls);
 private:
 	Voxnode *(sub[8]) = {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL};
 };
