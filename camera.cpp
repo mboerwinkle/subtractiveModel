@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <semaphore.h>
 #include "camera.h"
 
 
@@ -10,6 +11,7 @@ Camera::Camera(int idx){
 	if(!cam.isOpened()){
 		printf("Failed to open camera %d\n", idx);
 	}
+//	sem_init(&dataMutex, 0, 1);
 	grabFrame();
 	processFrame();
 	width = data.size().width;
@@ -18,7 +20,14 @@ Camera::Camera(int idx){
 void Camera::deleteFeed(){
 	destroyWindow(winName);
 	cam.release();
+//	sem_destroy(&dataMutex);
 }
+/*void Camera::getData(Mat write){
+	sem_wait(&dataMutex);
+	data.copyTo(write);
+	sem_post(&dataMutex);
+}
+*/
 void Camera::showDark(){
 	for(int x = 0; x < width; x++){
 		for(int y = 0; y < height; y++){
@@ -74,7 +83,9 @@ void Camera::getVec(double angle, double x, double y, double* out){
 }
 
 void Camera::processFrame(){
+//	sem_wait(&dataMutex);
 	cam.retrieve(data);
+//	sem_post(&dataMutex);
 	cam.retrieve(drawData);
 }
 void Camera::grabFrame(){

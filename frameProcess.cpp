@@ -4,7 +4,6 @@
 #include "voxtree.h"
 extern Camera cam;
 extern Voxtree volume;
-extern double FOV, VERT_FOV;//FIXME make attribute of camera
 extern int distToCenter;
 extern int ProgressX;
 void frameProcess(char* view, double angle){
@@ -14,7 +13,7 @@ void frameProcess(char* view, double angle){
 	for(int x = 0; x < cam.width; x++){
 		ProgressX = x;
 		for(int y = 0; y < cam.height; y++){
-			if(view[x+y*cam.width]){//cut out this vector//FIXME line drawing robust to big deltaZ//FIXME dynamic stl file size.
+			if(view[x+y*cam.width]){//cut out this vector
 				double v1[3], v2[3], v3[3], v4[3];
 				double *(v[4]) = {v1, v2, v3, v4};
 				cam.getVec(angle, (double)x+0.5, (double)y+0.5, v1);

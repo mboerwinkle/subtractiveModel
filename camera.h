@@ -1,5 +1,6 @@
 #ifndef CAMERA_H
 #define CAMERA_H
+#include <semaphore.h>
 #include <opencv2/opencv.hpp>
 using namespace cv;
 class Camera{
@@ -15,9 +16,10 @@ double VERT_FOV = 0.523;
 	void grabFrame();
 	void showDark();
 	int darkThreshold = 50;
-	Mat data;
 	Mat drawData;
+	Mat data;
 	int width, height;
+//	void getData(Mat write);
 	void drawCross(int x, int y, int r, int g, int b);
 	int getRed(int x, int y);
 	int getBlue(int x, int y);
@@ -26,6 +28,7 @@ double VERT_FOV = 0.523;
 	int getBrightness(int x, int y);
 	void getVec(double angle, double x, double y, double* out);
 private:
+//	sem_t dataMutex;
 	cv::VideoCapture cam;
 };
 #endif

@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
+#include <semaphore.h>
 #include "camera.h"
 #include "voxtree.h"
 #include "delay.h"
@@ -35,8 +36,8 @@ int main(){
 
 		cam.grabFrame();
 		cam.processFrame();//FIXME semaphores
-		GaussianBlur(cam.data, cam.data, Size(11,11), 0, 0);
-//		medianBlur(cam.data, cam.data, 7);
+//		GaussianBlur(cam.data, cam.data, Size(11,11), 0, 0);
+		medianBlur(cam.data, cam.data, 5);
 		cam.showDark();
 		cam.drawCross(cam.width/2, cam.height/2, 255, 0, 255);
 		imshow(cam.winName, cam.drawData);
@@ -52,17 +53,19 @@ int main(){
 
 void* frameCapture(void *null){
 	char *(view[frames]);
+//	Mat dataCopy;
 	for(int frameIdx = 0; frameIdx < frames; frameIdx++){
-
+		double angle = frameIdx*2*M_PI/frames;
+		printf("Press enter when oriented to %.2lf degrees\n", angle*180/M_PI);
+		getchar();
+//		cam.getData(dataCopy);
 		view[frameIdx] = (char*)calloc(cam.width*cam.height, sizeof(char));
 		for(int x = 0; x < cam.width; x++){
 			for(int y = 0; y < cam.height; y++){
 				view[frameIdx][x+y*cam.width] = (cam.getBrightness(x, y) < cam.darkThreshold)? 0 : 1;//if below threshold then save 0, else 1
 			}
 		}
-		double angle = frameIdx*2*M_PI/frames;
-		printf("Press enter when oriented to %.2lf degrees\n", angle*180/M_PI);
-		getchar();
+
 	}
 	stillCapturing = false;
 	for(int frameIdx = 0; frameIdx < frames; frameIdx++){

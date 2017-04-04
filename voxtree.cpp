@@ -37,18 +37,14 @@ int Voxtree::get(int x, int y, int z){
 	return root->get(x, y, z);
 }
 Voxnode::Voxnode(int size){
-//	if(size > 1){
-		totalNodeCount++;
-		if(totalNodeCount > peakNodeCount){
-			peakNodeCount = totalNodeCount;
-		}
-	//}
+	totalNodeCount++;
+	if(totalNodeCount > peakNodeCount){
+		peakNodeCount = totalNodeCount;
+	}
 	this->size = size;
 }
 Voxnode::~Voxnode(){
-//	if(size > 1){
-		totalNodeCount--;
-	//}
+	totalNodeCount--;
 	for(int quadIdx = 0; quadIdx < 8; quadIdx++){
 		if(sub[quadIdx] != (Voxnode*)NULL){
 			puts("all nodes should be freed by the time of deletion!");
