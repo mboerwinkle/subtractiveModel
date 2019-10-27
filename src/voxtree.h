@@ -30,6 +30,6 @@ public:
 	int lineIntersects(int x, int y, int z, double* v);
 	int pyramidIntersects(int x, int y, int z, double** v, plane* walls);
 private:
-	Voxnode *(sub[8]) = {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL};
+	Voxnode *sub[8] = {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL};
 };
 #endif

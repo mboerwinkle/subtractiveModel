@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <inttypes.h>
 #include "voxtree.h"
-extern Voxtree volume;
+extern Voxtree* volume;
 struct tri{ 
 	float vec[3];
 	float p1[3];
@@ -98,38 +98,38 @@ void makeStl(){
 	char *stl = (char*)malloc(size);
 	uint32_t triCount = 0;
 	tri *data = (tri*)(stl+84);
-    for(int x = 1; x < volume.size-1; x++){
-		for(int y = 1; y < volume.size-1; y++){
-			for(int z = 1; z < volume.size-1; z++){
-				if(volume.get(x, y, z) != 1){
+    for(int x = 1; x < volume->size-1; x++){
+		for(int y = 1; y < volume->size-1; y++){
+			for(int z = 1; z < volume->size-1; z++){
+				if(volume->get(x, y, z) != 1){
 					continue;
 				}
-				if(volume.get(x+1, y, z) == 0){
+				if(volume->get(x+1, y, z) == 0){
 					makeXFace(&(data[triCount]), x+1, y, z, 0, 1);
 					triCount+=2;
 					memTriLeft-=2;
 				}
-				if(volume.get(x-1, y, z) == 0){
+				if(volume->get(x-1, y, z) == 0){
 					makeXFace(&(data[triCount]), x, y, z, 1, 0);
 					triCount+=2;
 					memTriLeft-=2;
 				}
-				if(volume.get(x, y+1, z) == 0){
+				if(volume->get(x, y+1, z) == 0){
 					makeYFace(&(data[triCount]), x, y+1, z, 0, 1);
 					triCount+=2;
 					memTriLeft-=2;
 				}
-				if(volume.get(x, y-1, z) == 0){
+				if(volume->get(x, y-1, z) == 0){
 					makeYFace(&(data[triCount]), x, y, z, 1, 0);
 					triCount+=2;
 					memTriLeft-=2;
 				}
-				if(volume.get(x, y, z+1) == 0){
+				if(volume->get(x, y, z+1) == 0){
 					makeZFace(&(data[triCount]), x, y, z+1, 0, 1);
 					triCount+=2;
 					memTriLeft-=2;
 				}
-				if(volume.get(x, y, z-1) == 0){
+				if(volume->get(x, y, z-1) == 0){
 					makeZFace(&(data[triCount]), x, y, z, 1, 0);
 					triCount+=2;
 					memTriLeft-=2;
@@ -143,7 +143,7 @@ void makeStl(){
 			}
 		}
 	}
-	printf("%d/%ld triangles\n", triCount, (size-84)/sizeof(tri));
+	printf("%d triangles used, %.3lf MiB allocated, %.3lf MiB saved\n", triCount, (double)size/1048576.0, (double)(84+sizeof(tri)*triCount)/1048576.0);
 	*((uint32_t*)(stl+80)) = triCount;
 	FILE* stlfp = fopen("output.stl", "w");
 	fwrite(stl, 1, 84+triCount*sizeof(tri), stlfp);

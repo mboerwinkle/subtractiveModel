@@ -14,7 +14,7 @@ Voxtree::Voxtree(int size){
 	while(realSize < size){
 		realSize*=2;
 	}
-	printf("Real Size is %d\n", realSize);
+	printf("Voxel cube dimension: %d\n", realSize);
 	this->size = realSize;
 	root = new Voxnode(this->size);
 }
