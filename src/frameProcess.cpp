@@ -5,10 +5,19 @@
 extern Camera cam;
 extern Voxtree *volume;
 extern double distToCenter;
+extern double volumeSideLen;
 extern int ProgressX;
 void frameProcess(char* view, double angle){
-	double camPosX = cos(angle)*distToCenter;
-	double camPosY = sin(angle)*distToCenter;
+	/*
+	 * Coord = camera coordinates as far as the volume is concerned.
+	 * size = size of the volume (e.g. 512)
+	 * sidelen = user provided side length of the volume
+	 * dist = user provided distance from the center
+	 * coord/size = dist/sidelen
+	 * coord = dist * size / sidelen = "distToCenter*volume->size/volumeSideLen"
+	 */
+	double camPosX = cos(angle)*  distToCenter*volume->size/volumeSideLen;
+	double camPosY = sin(angle)*  distToCenter*volume->size/volumeSideLen;
 	double camPosZ = 0;
 	printf("Camera Coordinates: %.3lf %.3lf %.3lf\n", camPosX, camPosY, camPosZ);
 	for(int x = 0; x < cam.width; x++){
