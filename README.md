@@ -1,16 +1,31 @@
 # subtractiveModel
-OVERVIEW
+
+##OVERVIEW
 Using turntable and single webcam, subtractively model objects on inverted backgrounds.
-BUILDING
-run ./debugbuild.sh
-execute ./out.out
-BASIC HOW TO USE:
-Set up a softly lit background.
-Set up the target model on clear supports (a glass cup works well for me)
-Run the program. It looks for your second webcam (to avoid laptop integrated cams). you can change this by changing main.cpp. Change cam(1) to cam(0).
-You should see a window with webcam output. Pink regions are dark enough to be the model. Adjust your room lighting or darkThreshold in camera.h until the silhouette is mostly just on the model. It can work with some pink around the top, bottom or sides. But eliminate as much as you can.
-Be sure the webcam is pointed level and at the axis of rotation.
-I generally set up 45 degree increments so that I can accurately rotate and position my model.
-Follow the instructions in the terminal window (Beginning with pressing enter when at 0 degrees).
-output.dat is text output of the model.
-output.stl is stl output of the model.
+
+##BUILDING
+From base directory:
+'''
+cmake .
+make
+'''
+
+##RUNNING
+'./subtractiveModel VIDEO_SRC_IDX FRAMES DIST_TO_CENTER VOLUME_SIDE_LENGTH MODEL_RESOLUTION'
+'VIDEO_SRC_IDX': OpenCV camera ID. If you only have one camera, specify 0.
+'FRAMES': The number of silhouette images you want to grab.
+'DIST_TO_CENTER': The distance from the camera to the center of the object you are rotating. This is arbitrary units, but must be the same as 'VOLUME_SIDE_LENGTH'.
+'VOLUME_SIDE_LENGTH': What size is the object you are imaging? This parameter specifies the length of one edge of a bounding cube centered at the camera height and axis of rotation.
+'MODEL_RESOLUTION': How detailed do you want your model? Higher values are more resolution in the final model, but take longer to process.
+
+EX. './subtractiveModel 0 12 30 10 500'
+
+##BASIC HOW TO USE:
+- Set up a softly lit background. A sheet of paper with a lamp shining on it works well.
+- Set up the target model on clear supports (A glass cup is good for small objects).
+- Run the program.
+- You should see a window with webcam output. Pink regions are dark enough to be the model. Adjust your room lighting until the silhouette is mostly just on the model. It can work with some pink around the top, bottom, or sides, but eliminate as much as you can.
+- Be sure the webcam center view axis is **intersecting** and **orthogonal** to the model rotation axis. The pink dot should be in the center of the screen.
+- For best results, an angle-indexed turntable is recommended.
+- Follow the instructions in the terminal window (Beginning with pressing enter when at 0 degrees).
+- STL output is written to output.stl.

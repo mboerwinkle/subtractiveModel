@@ -34,3 +34,9 @@ Makefile
 CMakeCache.txt
 CMakeFiles
 cmake_install.cmake
+
+#Debug
+vgcore.*
+
+#Settings files
+calib*.json
