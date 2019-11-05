@@ -23,13 +23,13 @@ void jsonLog(const char* msg, int lvl){
 double jsonGetDouble(jsonValue j){
 	if(j.type != NUMBER) jsonLog("Wrong type. Not NUMBER", 1);
 	double ret;
-	sscanf((char*)(j.data), "%lf", ret);
+	sscanf((char*)(j.data), "%lf", &ret);
 	return ret;
 }
 int jsonGetInt(jsonValue j){
 	if(j.type != NUMBER) jsonLog("Wrong type. Not NUMBER", 1);
 	int ret;
-	sscanf((char*)(j.data), "%d", ret);
+	sscanf((char*)(j.data), "%d", &ret);
 	return ret;
 }
 char* jsonGetString(jsonValue j){
