@@ -3,21 +3,18 @@
 #include <semaphore.h>
 #include <string.h>
 #include "camera.h"
+#include "loadJsonConfig.h"
 
 extern void norm(double* v);
-//real values
+//hardcoded camera calibration values.
 double cmValues[9] = {541.2580031887313, 0,317.4572030174616, 0,541.6212403166173, 235.17797199583416,0,0,1};
 double dcValues[5] = {-0.11403991045980194,0.20117497198196835,-0.0006543861951229738,0.0029130428627756684,-0.1081702720175864};
 double newCmValues[9];
 
-//transposed camera values
-//double cmValues[9] = {541.2580031887313, 0,0,0,541.6212403166173,0,317.4572030174616,235.17797199583416,1};
+char configFileName[80] = "default.json";
 
-//bogus values for testing
-//double cmValues[9] = {541.2580031887313, 0,200.4572030174616, 0,541.6212403166173, 235.17797199583416,0,0,1};
-//double dcValues[5] = {-0.11403991045980194,0.20117497198196835,-0.0006543861951229738,0.0029130428627756684,-0.1081702720175864};
 Camera::Camera(){
-	
+	loadCameraParams(configFileName);
 	sprintf(winName, "Camera Feed");
 	namedWindow(winName, cv::WINDOW_AUTOSIZE);
 	//create the camera Matrix
@@ -28,6 +25,34 @@ Camera::Camera(){
 	memcpy(newCmValues, cmValues, 9*sizeof(double));
 	NewCameraMatrix = Mat(3, 3, CV_64FC1, newCmValues);
 	sem_init(&dataMutex, 0, 1);
+}
+void Camera::loadCameraParams(char* fname){
+	FILE* fp = fopen(fname, "r");
+	if(fp == NULL){
+		printf("%s not found. Using defaults. (Highly not recommended)\n", configFileName);
+		return;
+	}
+	jsonValue* calibData = jsonLoad(fp);
+	fclose(fp);
+	printf("distortion model: \"%s\"\n", jsonGetString(jsonGetObj(*calibData, "distortion_model")));
+	jsonValue cm = jsonGetObj(*calibData, "camera_matrix");
+	jsonValue r0 = jsonGetArr(cm, 0);
+	jsonValue r1 = jsonGetArr(cm, 1);
+	jsonValue r2 = jsonGetArr(cm, 2);
+	for(int idx = 0; idx < 3; idx++){
+		cmValues[idx] = jsonGetDouble(jsonGetArr(r0, idx));
+		cmValues[idx+3] = jsonGetDouble(jsonGetArr(r1, idx));
+		cmValues[idx+6] = jsonGetDouble(jsonGetArr(r2, idx));
+	}
+	jsonValue distortion = jsonGetObj(*calibData, "distortion_coefficients");
+	if(5 != jsonGetLen(distortion)){
+		printf("Unknown distortion. %d distortion coef\n", jsonGetLen(distortion));
+	}
+	for(int idx = 0; idx < jsonGetLen(distortion); idx++){
+		dcValues[idx] = jsonGetDouble(jsonGetArr(distortion, idx));
+	}
+	jsonFree(*calibData);
+	free(calibData);
 }
 void Camera::assignFeed(int idx){
 	printf("Assigning Camera Feed %d\n", idx);

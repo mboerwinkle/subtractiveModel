@@ -9,6 +9,7 @@ public:
 	Camera();
 	void assignFeed(int idx);
 	void deleteFeed();
+	void loadCameraParams(char* fname);
 	char winName[80];
 	double FOV = 0.976;//FIXME delete
 	double VERT_FOV = 0.523;
@@ -35,7 +36,6 @@ public:
 	void getVec(double angle, double x, double y, double* out);
 	//void getVec(double angle, double U, double V, double* out);
 private:
-
 	cv::VideoCapture cam;
 };
 #endif
