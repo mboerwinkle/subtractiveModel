@@ -16,7 +16,7 @@ public:
 	//Quickly grabs the next frame...
 	void grabFrame();
 	void showDark();
-	int darkThreshold = 50;
+	int darkThreshold = 150;
 	Mat CameraMatrix;
 	Mat NewCameraMatrix;
 	Mat DistortionCoef;

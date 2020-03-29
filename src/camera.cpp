@@ -189,8 +189,8 @@ void Camera::processFrame(){
 	width = w;
 	height = h;
 	//set the camera new principle point to the center of the screen/image.
-	newCmValues[2] = w/2;
-	newCmValues[5] = h/2;
+	NewCameraMatrix.at<double>(2) = w/2;
+	NewCameraMatrix.at<double>(5) = h/2;
 }
 void Camera::grabFrame(){
 	cam.grab();
