@@ -26,7 +26,7 @@ public:
 	int quadrant(int x, int y, int z);
 	void quadCoordTrans(int quad, int x, int y, int z, int* ox, int* oy, int* oz);
 	int deleteLineIntersections(int x, int y, int z, double *v);
-	int deletePyramidIntersections(int x, int y, int z, double** v, plane* walls);
+	int deletePyramidIntersectionsRec(int x, int y, int z, double** v, plane* walls);
 	int lineIntersects(int x, int y, int z, double* v);
 	int pyramidIntersects(int x, int y, int z, double** v, plane* walls);
 private:

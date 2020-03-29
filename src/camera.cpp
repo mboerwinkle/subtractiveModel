@@ -83,9 +83,9 @@ void Camera::showDark(){
 	for(int x = 0; x < width; x++){
 		for(int y = 0; y < height; y++){
 			if(getBrightness(x, y) < darkThreshold){
-				drawData.at<cv::Vec3b>(y, x)[0] = 75;
-				drawData.at<cv::Vec3b>(y, x)[1] = 50;
-				drawData.at<cv::Vec3b>(y, x)[2] = 200;
+				drawData.at<cv::Vec3b>(y, x)[0] = 0;
+				drawData.at<cv::Vec3b>(y, x)[1] = 250;
+				drawData.at<cv::Vec3b>(y, x)[2] = 0;
 				
 			}
 		}
@@ -169,6 +169,7 @@ void Camera::getVec(double angle, double U, double V, double* out){
 	out[0] = vec[0]*c - vec[1]*s;
 	out[1] = vec[1]*c + vec[0]*s;
 	//printf("%.3lf, %.3lf, %.3lf\n", out[0], out[1], out[2]);
+	//printf("getVec Len: %lf\n", sqrt(out[0]*out[0]+out[1]*out[1]+out[2]*out[2]));
 }
 
 void Camera::processFrame(){

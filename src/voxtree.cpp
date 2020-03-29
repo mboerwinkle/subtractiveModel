@@ -25,9 +25,9 @@ void Voxtree::deletePyramidIntersections(int x, int y, int z, double **v){
 	plane walls[4];
 	for(int idx = 0; idx < 4; idx++){
 		cross(walls[idx].normal, v[idx], v[(idx+1)%4]);
-		norm(walls[idx].normal);//FIXME needed?
+		norm(walls[idx].normal);//FIXME needed? Yes. Crossproduct length is area of paralello
 	}
-	root->deletePyramidIntersections(x, y, z, v, walls);
+	root->deletePyramidIntersectionsRec(x, y, z, v, walls);
 }
 int Voxtree::get(int x, int y, int z){
 	if(x >= size || x < 0 || y >= size || y < 0 || z >= size || z < 0){
@@ -47,18 +47,20 @@ Voxnode::~Voxnode(){
 	totalNodeCount--;
 	for(int quadIdx = 0; quadIdx < 8; quadIdx++){
 		if(sub[quadIdx] != (Voxnode*)NULL){
-			puts("all nodes should be freed by the time of deletion!");
+			//puts("all nodes should be freed by the time of deletion!");
+			delete sub[quadIdx];
 		}
 	}
 }
-int Voxnode::deletePyramidIntersections(int x, int y, int z, double** v, plane* walls){
-	if(!pyramidIntersects(x, y, z, v, walls)){
+int Voxnode::deletePyramidIntersectionsRec(int x, int y, int z, double** v, plane* walls){
+	int pyInterRes = pyramidIntersects(x, y, z, v, walls);
+	if(!pyInterRes){
 		return 0;
 	}
+	if(pyInterRes == 2 || size == 1){//remove full intersections
+		return 1;
+	}
 	if(type == 1){
-		if(size == 1){
-			return 1;
-		}
 		type = 0;
 		for(int quadIdx = 0; quadIdx < 8; quadIdx++){
 			sub[quadIdx] = new Voxnode(size/2);
@@ -69,8 +71,8 @@ int Voxnode::deletePyramidIntersections(int x, int y, int z, double** v, plane* 
 	for(int quadIdx = 0; quadIdx < 8; quadIdx++){
 		if(sub[quadIdx] == NULL) continue;
 		quadCoordTrans(quadIdx, x, y, z, &nx, &ny, &nz);
-		if(sub[quadIdx]->deletePyramidIntersections(nx, ny, nz, v, walls)){
-			delete sub[quadIdx];
+		if(sub[quadIdx]->deletePyramidIntersectionsRec(nx, ny, nz, v, walls)){
+			delete sub[quadIdx];//Benchmarked. Does not introduce noticable slowdown
 			sub[quadIdx] = NULL;//FIXME needed?
 		}else good = true;
 	}
@@ -124,10 +126,15 @@ bool pointIsInsidePyramid(int x, int y, int z, plane* walls){
 	return false;
 }
 int Voxnode::pyramidIntersects(int x, int y, int z, double** v, plane* walls){
-	for(int i = 0; i < 4; i++){//if one of the four pyramid rays intersects
+	for(int i = 0; i < 4; i++){//if one of the four pyramid rays intersects, we know it is partial intersection
 		if(lineIntersects(x, y, z, v[i])) return 1;
 	}
-	//or one of the eight points is inside of the pyramid
+	//count the number of points inside the pyramid rays
+	int hasInside = 0;
+	int hasOutside = 0;
+	if(size == 1){//we do this to induce an early partial intersection match on the smallest nodes because we don't care if they have partial or full intersection.
+		hasOutside = 1;
+	}
 	for(int tx = 0; tx < 2; tx++){//FIXME rework
 		double px = -x+tx*size;
 		for(int ty = 0; ty < 2; ty++){
@@ -135,13 +142,18 @@ int Voxnode::pyramidIntersects(int x, int y, int z, double** v, plane* walls){
 			for(int tz = 0; tz < 2; tz++){
 				double pz = -z+tz*size;
 				if(pointIsInsidePyramid(px, py, pz, walls)){
-					if(size > 1){
-			//			printf("size: %d\n", size);
-					}
-					return 1;
+					hasInside++;
+					if(hasOutside) return 1;//if we have both, normal intersection (partial, create children)
+				}else{
+					hasOutside++;
+					if(hasInside) return 1;//if we have both, ... (same as above)
 				}
 			}
 		}
+	}
+	if(hasInside){//this implies "&& !hasOutside
+		//printf("We saved some time checking for full (size %d)\n", size); //This does trigger.
+		return 2;//full intersection
 	}
 	return 0;
 }
@@ -176,42 +188,41 @@ int Voxnode::get(int x, int y, int z){//works with bottom nodes stored as 1 or 0
 	
 }
 void Voxnode::quadCoordTrans(int quad, int x, int y, int z, int* ox, int* oy, int* oz){//FIXME more efficient. precoded values?
-	*ox = x;//fuck me. Forgot this and got fractal behavior.
-	*oy = y;
-	*oz = z;
+	//*ox = x;//fuck me. Forgot this and got fractal behavior.
+	//*oy = y;
+	//*oz = z;
 	if(quad<4){
-		if(quad < 2){//fixme remove else statements
+		*ox = x;
+		if(quad < 2){//fixme remove else statements//fixme replace else statements to prevent double assignment.
+			*oy = y;
 			if(quad == 0){
-//0
+				*oz = z;
 			}else{
 				*oz=z-size/2;
-//1
 			}
 		}else{
 			*oy=y-size/2;
 			if(quad == 2){
-//2
+				*oz = z;
 			}else{
 				*oz=z-size/2;
-//3
 			}
 		}
 	}else{
 		*ox=x-size/2;
 		if(quad < 6){
+			*oy = y;
 			if(quad == 4){
-//4
+				*oz = z;
 			}else{
 				*oz=z-size/2;
-//5
 			}
 		}else{
 			*oy=y-size/2;
 			if(quad == 6){
-//6
+				*oz = z;
 			}else{
 				*oz=z-size/2;
-//7
 			}
 		}
 	}
@@ -221,29 +232,30 @@ int Voxnode::quadrant(int x, int y, int z){
 	if(x > size || y > size || z > size){//FIXME remove once final
 		printf("Fatal Error! quadrant out of bounds. %d %d %d %d\n", x, y, z, size);
 	}
-	if(x < size/2){
-		if(y < size/2){
-			if(z < size/2){
+	int s2 = size/2;
+	if(x < s2){
+		if(y < s2){
+			if(z < s2){
 				return 0;
 			}else{
 				return 1;
 			}
 		}else{
-			if(z < size/2){
+			if(z < s2){
 				return 2;
 			}else{
 				return 3;
 			}
 		}
 	}else{
-		if(y < size/2){
-			if(z < size/2){
+		if(y < s2){
+			if(z < s2){
 				return 4;
 			}else{
 				return 5;
 			}
 		}else{
-			if(z < size/2){
+			if(z < s2){
 				return 6;
 			}else{
 				return 7;

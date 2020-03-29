@@ -16,6 +16,7 @@ double volumeSideLen = 0;
 int frames = 0;//This is the number of frames we want to take.
 int frameIdx = -1;//This is the frame currently being processed.
 int ProgressX = 0;//This is used to give updates about the processing progress.
+
 Voxtree *volume;
 
 Camera cam;
