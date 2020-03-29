@@ -39,7 +39,7 @@ int main(int argc, char *argv[]){
 	printf("Frames: %d  DistToCenter: %.3lf  VolumeSideLen: %.3lf\n", frames, distToCenter, volumeSideLen);
 	volume = new Voxtree(atof(argv[5]));
 	printf("Each voxel is %.3lf^3\n", volumeSideLen/volume->size);
-	printf("Each pixel is approximately %.3lf voxels. Below ~1 voxel you are wasting memory and should use a lower model resolution. Above ~1 voxel you are wasting camera resolution.\n", 0.0);
+	//printf("Each pixel is approximately %.3lf voxels. Below ~1 voxel you are wasting memory and should use a lower model resolution. Above ~1 voxel you are wasting camera resolution.\n", 0.0);
 	//startWindowThread();
 
 	pthread_t frameCapThread;
@@ -59,9 +59,13 @@ int main(int argc, char *argv[]){
 //		GaussianBlur(cam.data, cam.data, Size(11,11), 0, 0);
 		medianBlur(cam.data, cam.data, 5);
 		cam.showDark();
-		cam.drawCross(cam.width/2, cam.height/2, 255, 0, 255);
-			imshow(cam.winName, cam.drawData);
-			waitKey(1000.0/(double)(FRAMERATE));
+		for(int x = 0; x < 15; x++){
+			for(int y = 0; y < 5; y++){
+				cam.drawCross(cam.width*(x+1)/(15+1), cam.height*(y+1)/(5+1), 255, 0, 255);
+			}
+		}
+		imshow(cam.winName, cam.drawData);
+		waitKey(1000.0/(double)(FRAMERATE));
 	}
 	cam.deleteFeed();
 

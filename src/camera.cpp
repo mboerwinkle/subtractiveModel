@@ -92,8 +92,8 @@ void Camera::showDark(){
 	}
 }
 void Camera::drawCross(int x, int y, int r, int g, int b){
-	for(int tempx = x-3; tempx <=x+3; tempx++){
-	for(int tempy = y-3; tempy <=y+3; tempy++){
+	for(int tempx = x-2; tempx < x+2; tempx++){
+	for(int tempy = y-2; tempy < y+2; tempy++){
 		drawData.at<cv::Vec3b>(tempy, tempx)[0] = b;//coloridx here
 		drawData.at<cv::Vec3b>(tempy, tempx)[1] = g;
 		drawData.at<cv::Vec3b>(tempy, tempx)[2] = r;
