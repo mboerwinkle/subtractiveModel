@@ -11,8 +11,6 @@ public:
 	void deleteFeed();
 	void loadCameraParams(char* fname);
 	char winName[80];
-	double FOV = 0.976;//FIXME delete
-	double VERT_FOV = 0.523;
 	//writes camera output to internal frame storage.
 	void processFrame();
 	//Quickly grabs the next frame...

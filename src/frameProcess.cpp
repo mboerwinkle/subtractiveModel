@@ -16,8 +16,8 @@ void frameProcess(char* view, double angle){
 	 * coord/size = dist/sidelen
 	 * coord = dist * size / sidelen = "distToCenter*volume->size/volumeSideLen"
 	 */
-	double camPosX = cos(angle)*  distToCenter*volume->size/volumeSideLen;
-	double camPosY = sin(angle)*  distToCenter*volume->size/volumeSideLen;
+	double camPosX = cos(angle)*  distToCenter*(double)(volume->size)/volumeSideLen;
+	double camPosY = sin(angle)*  distToCenter*(double)(volume->size)/volumeSideLen;
 	double camPosZ = 0;
 	printf("Camera Coordinates: %.3lf %.3lf %.3lf\n", camPosX, camPosY, camPosZ);
 	for(int x = 0; x < cam.width; x++){
@@ -26,10 +26,10 @@ void frameProcess(char* view, double angle){
 			if(view[x+y*cam.width]){//cut out this vector
 				double v1[3], v2[3], v3[3], v4[3];
 				double *v[4] = {v1, v2, v3, v4};
-				cam.getVec(angle, (double)x+0.5, (double)y+0.5, v1);
-				cam.getVec(angle, (double)x+0.5, (double)y-0.5, v2);
-				cam.getVec(angle, (double)x-0.5, (double)y-0.5, v3);
-				cam.getVec(angle, (double)x-0.5, (double)y+0.5, v4);
+				cam.getVec(angle, (double)(x+1), (double)(y+1), v1);
+				cam.getVec(angle, (double)(x+1), (double)y, v2);
+				cam.getVec(angle, (double)x, (double)y, v3);
+				cam.getVec(angle, (double)x, (double)(y+1), v4);
 				volume->deletePyramidIntersections(camPosX+volume->size/2, camPosY+volume->size/2, camPosZ+volume->size/2, v);
 			}
 		}

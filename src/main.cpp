@@ -16,7 +16,6 @@ double volumeSideLen = 0;
 int frames = 0;//This is the number of frames we want to take.
 int frameIdx = -1;//This is the frame currently being processed.
 int ProgressX = 0;//This is used to give updates about the processing progress.
-//Voxtree *volume;
 Voxtree *volume;
 
 Camera cam;
@@ -41,7 +40,7 @@ int main(int argc, char *argv[]){
 	volume = new Voxtree(atof(argv[5]));
 	printf("Each voxel is %.3lf^3\n", volumeSideLen/volume->size);
 	printf("Each pixel is approximately %.3lf voxels. Below ~1 voxel you are wasting memory and should use a lower model resolution. Above ~1 voxel you are wasting camera resolution.\n", 0.0);
-	startWindowThread();
+	//startWindowThread();
 
 	pthread_t frameCapThread;
 	pthread_create(&frameCapThread, NULL, frameCapture, NULL);
