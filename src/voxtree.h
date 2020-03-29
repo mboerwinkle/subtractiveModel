@@ -9,10 +9,12 @@ typedef struct plane{
 class Voxtree{
 public:
 	Voxtree(int size);
+	static int equalOrGreaterPow2(int target);
 	int get(int x, int y, int z);
 	int size;
 	void deleteLineIntersections(int x, int y, int z, double *v);
 	void deletePyramidIntersections(int x, int y, int z, double **v);
+	int doesPyramidIntersectFull(int x, int y, int z, double **v);
 private:
 	Voxnode* root = NULL;
 };
@@ -27,6 +29,7 @@ public:
 	void quadCoordTrans(int quad, int x, int y, int z, int* ox, int* oy, int* oz);
 	int deleteLineIntersections(int x, int y, int z, double *v);
 	int deletePyramidIntersectionsRec(int x, int y, int z, double** v, plane* walls);
+	int doesPyramidIntersectFullRec(int x, int y, int z, double **v, plane* walls);
 	int lineIntersects(int x, int y, int z, double* v);
 	int pyramidIntersects(int x, int y, int z, double** v, plane* walls);
 private:

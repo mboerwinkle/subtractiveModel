@@ -10,13 +10,17 @@ extern double dot(double* v1, double* v2);
 
 
 Voxtree::Voxtree(int size){
-	int realSize = 1;
-	while(realSize < size){
-		realSize*=2;
-	}
+	int realSize = equalOrGreaterPow2(size);
 	printf("Voxel cube dimension: %d\n", realSize);
 	this->size = realSize;
 	root = new Voxnode(this->size);
+}
+int Voxtree::equalOrGreaterPow2(int target){
+	int realSize = 1;
+	while(realSize < target){
+		realSize*=2;
+	}
+	return realSize;
 }
 void Voxtree::deleteLineIntersections(int x, int y, int z, double *v){
 	root->deleteLineIntersections(x, y, z, v);
@@ -28,6 +32,17 @@ void Voxtree::deletePyramidIntersections(int x, int y, int z, double **v){
 		norm(walls[idx].normal);//FIXME needed? Yes. Crossproduct length is area of paralello
 	}
 	root->deletePyramidIntersectionsRec(x, y, z, v, walls);
+}
+int Voxtree::doesPyramidIntersectFull(int x, int y, int z, double **v){
+	plane walls[4];
+	for(int idx = 0; idx < 4; idx++){
+		cross(walls[idx].normal, v[idx], v[(idx+1)%4]);
+		norm(walls[idx].normal);//FIXME needed? Yes. Crossproduct length is area of paralello
+	}
+	if(!root->pyramidIntersects(x, y, z, v, walls)){//check just top level to check for oob
+		return -1;// out of bounds.
+	}
+	return root->doesPyramidIntersectFullRec(x, y, z, v, walls);
 }
 int Voxtree::get(int x, int y, int z){
 	if(x >= size || x < 0 || y >= size || y < 0 || z >= size || z < 0){
@@ -80,6 +95,24 @@ int Voxnode::deletePyramidIntersectionsRec(int x, int y, int z, double** v, plan
 		return 1;
 	}
 	return 0;
+}
+int Voxnode::doesPyramidIntersectFullRec(int x, int y, int z, double** v, plane* walls){
+	int pyInterRes = pyramidIntersects(x, y, z, v, walls);
+	if(!pyInterRes){//If it doesn't intersect us, it doesn't
+		return 0;
+	}
+	if(pyInterRes == 2 || size == 1 || type == 1){//If it intersects us completely, or we are min size, or we are full, then it does.
+		return 1;
+	}
+	int nx, ny, nz;
+	for(int quadIdx = 0; quadIdx < 8; quadIdx++){//We are intersected, but we can't guarantee it is a populated part (we are partial)
+		if(sub[quadIdx] == NULL) continue;
+		quadCoordTrans(quadIdx, x, y, z, &nx, &ny, &nz);
+		if(sub[quadIdx]->doesPyramidIntersectFullRec(nx, ny, nz, v, walls)){//if any of our children have a certain intersection, so do we
+			return 1;
+		}
+	}
+	return 0;//we were intersected, but it turns out none of our populated children have a real intersection
 }
 int Voxnode::deleteLineIntersections(int x, int y, int z, double* v){
 	if(!lineIntersects(x, y, z, v)){
@@ -167,7 +200,7 @@ int Voxnode::lineIntersects(int x, int y, int z, double* v){
 		double final1 = v[(s+1)%3]*tFinal+c[(s+1)%3];
 		double init2 = v[(s+2)%3]*tInit+c[(s+2)%3];
 		double final2 = v[(s+2)%3]*tFinal+c[(s+2)%3];
-		if( ((init1 <= size && init1 >= 0) && (init2 <= size && init2 >= 0)) || ((final1 <= size && final1 >= 0) && (final2 <= size && final2 >= 0))){
+		if( ((init1 < size && init1 >= 0) && (init2 < size && init2 >= 0)) || ((final1 < size && final1 >= 0) && (final2 < size && final2 >= 0))){
 			return 1;
 		}
 	}

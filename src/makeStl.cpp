@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <inttypes.h>
 #include "voxtree.h"
-extern Voxtree* volume;
 struct tri{ 
 	float vec[3];
 	float p1[3];
@@ -91,7 +90,7 @@ void makeZFace(tri* d, int x, int y, int z, int d1, int d2){
 	d[1].p3[1]=y+1;
 	d[1].p3[2]=z;
 }
-void makeStl(){
+void makeStl(Voxtree* volume){
 	int triStep = 100;
 	int size = 84+triStep*sizeof(tri);
 	int memTriLeft = 100;

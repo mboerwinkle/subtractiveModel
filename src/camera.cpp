@@ -62,7 +62,7 @@ void Camera::assignFeed(int idx){
 	cam.open(idx);
 	if(!cam.isOpened()){
 		printf("Failed to open camera %d\n", idx);
-		return;
+		exit(1);
 	}
 //	sem_init(&dataMutex, 0, 1);
 	grabFrame();
