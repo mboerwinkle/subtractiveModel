@@ -82,7 +82,7 @@ void* frameCapture(void *null){
 	char *view[frames];
 	for(frameIdx = 0; frameIdx < frames; frameIdx++){
 		double angle = frameIdx*2*M_PI/frames;
-		printf("Press enter when oriented to %.2lf degrees\n", angle*180/M_PI);
+		printf("Press enter when oriented to %.2lf degrees", angle*180/M_PI);
 		getchar();
 		printf("Copying Data for Frame %d/%d!\n", frameIdx+1, frames);
 		view[frameIdx] = (char*)calloc(cam.width*cam.height, sizeof(char));
@@ -108,11 +108,24 @@ void* frameCapture(void *null){
 	}
 	printf("Peak Node Count is %d\n", peakNodeCount);
 	printf("Calculating result quality\n");
+	double quality[frames];
 	for(frameIdx = 0; frameIdx < frames; frameIdx++){
 		double angle = frameIdx*2*M_PI/frames;
-		double quality = checkFrameQuality(volume, view[frameIdx], angle);
-		printf(" Frame %d quality is %lf\n", frameIdx, quality);
+		quality[frameIdx] = checkFrameQuality(volume, view[frameIdx], angle);
 	}
+	printf("Qualities: %lf", quality[0]);
+	for(int qIdx = 1; qIdx < frames; qIdx++){
+		printf(", %lf", quality[qIdx]);
+	}
+	printf("\n");
+	for(int mergeIdx = 2; mergeIdx < frames*2; mergeIdx*=2){//This is a tree-based multiply together algorithm to avoid frame favoritism from imprecise multiplication
+		for(int idx = 0; idx < frames; idx+=mergeIdx){
+			if(idx+mergeIdx/2 < frames){
+				quality[idx] *= quality[idx+mergeIdx/2];
+			}
+		}
+	}
+	printf("Overall quality: %lf\n", quality[0]);
 	puts("Creating STL.");
 	makeStl(volume);
 	puts("STL Created.");
