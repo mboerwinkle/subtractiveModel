@@ -57,8 +57,8 @@ void Camera::loadCameraParams(char* fname){
 void Camera::assignFeed(int idx){
 	printf("Assigning Camera Feed %d\n", idx);
 	char newName[80];
-	sprintf(newName, "Camera Feed %d", idx);
-	setWindowTitle(winName, newName);
+	//sprintf(newName, "Camera Feed %d", idx);
+	//setWindowTitle(winName, newName);
 	cam.open(idx);
 	if(!cam.isOpened()){
 		printf("Failed to open camera %d\n", idx);

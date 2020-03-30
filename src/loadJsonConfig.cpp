@@ -90,7 +90,7 @@ typedef struct jsonString{
 }jsonString;
 
 jsonString initJsonString(){
-	jsonString ret = {.len = 0, .size = 10};
+	jsonString ret = {.d = NULL, .len = 0, .size = 10};
 	ret.d = (char*)malloc(ret.size);
 	ret.d[0] = 0;
 	return ret;
