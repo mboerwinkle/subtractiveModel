@@ -7,5 +7,5 @@
  * Extradata is just whatever other data you want to pass to the fitness function.
  * Axes is the order of the search space
  */
-extern double* hillClimb(int axes, double* min, double* max, double* step, void* extraData, double (*fitness)(void*, double*));
+extern double* hillClimb(int axes, double* min, double* max, double* step, void* extraData, double (*fitness)(void*, double*), int maxIterations);
 #endif

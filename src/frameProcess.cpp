@@ -66,7 +66,7 @@ extern double checkFrameQuality(Voxtree *volume, char* view, double angle, doubl
 	int targetPixCount = 0;//This is how many pixels we want to intersect a block.
 	int fulfilledPixCount = 0;//This is how many pixels actually intersect a block.
 	for(int x = 0; x < cam.width; x++){
-		for(int y = 0; y < cam.height; y++){
+		for(int y = 0; y < cam.height /*&& y < 315*/; y++){
 			if(!view[x+y*cam.width]){//this vector should not have gotten cut
 				double v1[3], v2[3], v3[3], v4[3];
 				double *v[4] = {v1, v2, v3, v4};

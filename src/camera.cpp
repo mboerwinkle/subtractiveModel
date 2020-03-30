@@ -15,8 +15,7 @@ char configFileName[80] = "default.json";
 
 Camera::Camera(){
 	loadCameraParams(configFileName);
-	sprintf(winName, "Camera Feed");
-	namedWindow(winName, cv::WINDOW_AUTOSIZE);
+
 	//create the camera Matrix
 	CameraMatrix = Mat(3, 3, CV_64FC1, cmValues);
 	//create the distortion coefficient matrix
@@ -56,9 +55,8 @@ void Camera::loadCameraParams(char* fname){
 }
 void Camera::assignFeed(int idx){
 	printf("Assigning Camera Feed %d\n", idx);
-	char newName[80];
-	//sprintf(newName, "Camera Feed %d", idx);
-	//setWindowTitle(winName, newName);
+	sprintf(winName, "Camera Feed");
+	namedWindow(winName, cv::WINDOW_AUTOSIZE);
 	cam.open(idx);
 	if(!cam.isOpened()){
 		printf("Failed to open camera %d\n", idx);
@@ -109,7 +107,7 @@ int Camera::getBlue(int x, int y){
 	return getComp(x, y, 'b');
 }
 int Camera::getComp(int x, int y, char c){
-	int coloridx;//coloridx here
+	int coloridx = 0;//coloridx here
 	if(c == 'r'){
 		coloridx = 2;
 	}else if(c == 'g'){
@@ -120,7 +118,8 @@ int Camera::getComp(int x, int y, char c){
 	return data.at<cv::Vec3b>(y, x)[coloridx];
 }
 int Camera::getBrightness(int x, int y){
-	return (getRed(x, y)+getBlue(x, y)+getGreen(x, y))/3;
+	Vec3b pix = data.at<cv::Vec3b>(y, x);
+	return (pix[0]+pix[1]+pix[2])/3;
 }
 /*
 void Camera::getVec(double angle, double x, double y, double* out){

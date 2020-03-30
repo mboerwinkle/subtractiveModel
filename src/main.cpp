@@ -3,7 +3,7 @@
 #include <pthread.h>
 #include <semaphore.h>
 #include <opencv2/opencv.hpp>
-#include <opencv2/highgui.hpp>
+#include <opencv2/highgui/highgui.hpp>
 #include "camera.h"
 #include "voxtree.h"
 #include "delay.h"
@@ -17,7 +17,8 @@ double volumeSideLen = 0;
 int frames = 0;//This is the number of frames we want to take.
 int frameIdx = -1;//This is the frame currently being processed.
 int modelRes = 0;//This is based on a user-provided argument. It is used in the Voxtree constructor.
-
+int loadFromImages = 0;//This is chosen to load from the auto-saved snapshots.
+int maxIterations = 0;
 Camera cam;
 bool stillCapturing = true;
 
@@ -29,52 +30,56 @@ extern double checkFrameQuality(Voxtree *volume, char* view, double angle, doubl
 Voxtree* createModel(char** view, double corrDistToCenter, double corrHorizOffset, double corrAxisX, double corrAxisY);
 double getCorrectionScore(void* view_void, double* args);
 int main(int argc, char *argv[]){
-	if(argc != 6){
-		printf("USAGE: ./subtractiveModel VIDEO_SRC_IDX FRAMES DIST_TO_CENTER VOLUME_SIDE_LENGTH MODEL_RESOLUTION (ex. \"./subtractiveModel 0 12 90.0 40.0 500\"\n");
+	if(argc != 7){
+		printf("USAGE: ./subtractiveModel VIDEO_SRC_IDX FRAMES DIST_TO_CENTER VOLUME_SIDE_LENGTH MODEL_RESOLUTION MAX_CORRECTION_ITERATIONS (ex. \"./subtractiveModel 0 12 90.0 40.0 500 0\"\n");
 		return 1;
 	}
-	int camIdx = atoi(argv[1]);
-	if(camIdx == -1){
-	}else{
-		cam.assignFeed();
-	}
+
 	sscanf(argv[2], "%d", &frames);
 	sscanf(argv[3], "%lf", &distToCenter);
 	sscanf(argv[4], "%lf", &volumeSideLen);
 	printf("Frames: %d  DistToCenter: %.3lf  VolumeSideLen: %.3lf\n", frames, distToCenter, volumeSideLen);
 	modelRes = Voxtree::equalOrGreaterPow2(atof(argv[5]));
+	maxIterations = atoi(argv[6]);
+	
 
 	printf("Each voxel is %.3lf^3\n", volumeSideLen/modelRes);
 	//printf("Each pixel is approximately %.3lf voxels. Below ~1 voxel you are wasting memory and should use a lower model resolution. Above ~1 voxel you are wasting camera resolution.\n", 0.0);
 	//startWindowThread();
-
+	int camIdx = atoi(argv[1]);
+	if(camIdx == -1){
+		loadFromImages = 1;
+	}else{
+		cam.assignFeed(camIdx);
+	}
 	pthread_t frameCapThread;
 	pthread_create(&frameCapThread, NULL, frameCapture, NULL);
-	int periodic = 0;
-	while(stillCapturing){
-		//delay(FRAMERATE);
-		periodic++;
-		if(periodic == FRAMERATE){
-			periodic = 0;
-			//printf("resizing window. X:%d Y:%d\n", cam.width, cam.height);
-			resizeWindow(cam.winName, cam.width, cam.height);
-		}
-
-		cam.grabFrame();
-		cam.processFrame();//FIXME semaphores
-//		GaussianBlur(cam.data, cam.data, Size(11,11), 0, 0);
-		medianBlur(cam.data, cam.data, 5);
-		cam.showDark();
-		for(int x = 0; x < 15; x++){
-			for(int y = 0; y < 5; y++){
-				cam.drawCross(cam.width*(x+1)/(15+1), cam.height*(y+1)/(5+1), 255, 0, 255);
+	if(!loadFromImages){
+		int periodic = 0;
+		while(stillCapturing){
+			//delay(FRAMERATE);
+			periodic++;
+			if(periodic == FRAMERATE){
+				periodic = 0;
+				//printf("resizing window. X:%d Y:%d\n", cam.width, cam.height);
+				resizeWindow(cam.winName, cam.width, cam.height);
 			}
-		}
-		imshow(cam.winName, cam.drawData);
-		waitKey(1000.0/(double)(FRAMERATE));
-	}
-	cam.deleteFeed();
 
+			cam.grabFrame();
+			cam.processFrame();//FIXME semaphores
+	//		GaussianBlur(cam.data, cam.data, Size(11,11), 0, 0);
+			medianBlur(cam.data, cam.data, 5);
+			cam.showDark();
+			for(int x = 0; x < 15; x++){
+				for(int y = 0; y < 5; y++){
+					cam.drawCross(cam.width*(x+1)/(15+1), cam.height*(y+1)/(5+1), 255, 0, 255);
+				}
+			}
+			imshow(cam.winName, cam.drawData);
+			waitKey(1000.0/(double)(FRAMERATE));
+		}
+		cam.deleteFeed();
+	}
 	printf("Frame gathering complete.\n");
 	pthread_join(frameCapThread, NULL);
 }
@@ -82,22 +87,31 @@ int main(int argc, char *argv[]){
 void* frameCapture(void *null){
 	char *view[frames];
 	for(frameIdx = 0; frameIdx < frames; frameIdx++){
-		double angle = frameIdx*2*M_PI/frames;
-		printf("Press enter when oriented to %.2lf degrees", angle*180/M_PI);
-		getchar();
-		printf("Copying Data for Frame %d/%d!\n", frameIdx+1, frames);
+		char outname[80];//picture name for this image
+		sprintf(outname, "out%d.png", frameIdx);
+		if(loadFromImages){
+			cam.data = imread(outname);
+			if(cam.data.data == NULL){
+				printf("Could not open file %s\n", outname);
+				return NULL;
+			}else{
+				cam.width = cam.data.cols;
+				cam.height = cam.data.rows;
+			}
+		}else{
+			printf("Press enter when oriented to %.2lf degrees", frameIdx*360.0/frames);
+			getchar();
+			printf("Copying Data for Frame %d/%d!\n", frameIdx+1, frames);
+			imwrite(outname, cam.data);
+		}
 		view[frameIdx] = (char*)calloc(cam.width*cam.height, sizeof(char));
 		sem_wait(&(cam.dataMutex));
-		char outname[80];//write out the camera picture to file.
-		sprintf(outname, "out%d.png", frameIdx);
-		imwrite(outname, cam.data);
-		for(int x = 0; x < cam.width; x++){
-			for(int y = 0; y < cam.height; y++){
-				view[frameIdx][x+y*cam.width] = (cam.getBrightness(x, y) < cam.darkThreshold)? 0 : 1;//if below threshold then save 0, else 1
+			for(int x = 0; x < cam.width; x++){
+				for(int y = 0; y < cam.height; y++){
+					view[frameIdx][x+y*cam.width] = (cam.getBrightness(x, y) < cam.darkThreshold)? 0 : 1;//if below threshold then save 0, else 1
+				}
 			}
-		}
 		sem_post(&(cam.dataMutex));
-
 	}
 	stillCapturing = false;
 
@@ -116,38 +130,8 @@ void* frameCapture(void *null){
 	for(int idx = 0; idx < 4; idx++){
 		step[idx] = (max[idx]-min[idx])/20.0;
 	}
-	double* optimal = hillClimb(4, min, max, step, view, &getCorrectionScore);
+	double* optimal = hillClimb(4, min, max, step, view, &getCorrectionScore, maxIterations);
 	Voxtree *volume = createModel(view, optimal[0], optimal[1], optimal[2], optimal[3]);
-	/*
-	//
-	Voxtree *volume = new Voxtree(modelRes);
-	for(frameIdx = 0; frameIdx < frames; frameIdx++){
-		double angle = frameIdx*2*M_PI/frames;
-		frameProcess(volume, view[frameIdx], angle);
-		printf(" Frame %d final Node Count is %d\n", frameIdx, totalNodeCount);
-	}
-	printf("Peak Node Count is %d\n", peakNodeCount);
-	printf("Calculating result quality\n");
-	double quality[frames];
-	for(frameIdx = 0; frameIdx < frames; frameIdx++){
-		double angle = frameIdx*2*M_PI/frames;
-		quality[frameIdx] = checkFrameQuality(volume, view[frameIdx], angle);
-	}
-	printf("Qualities(percent 'there' pixels that are still occluded): %lf", quality[0]);
-	for(int qIdx = 1; qIdx < frames; qIdx++){
-		printf(", %lf", quality[qIdx]);
-	}
-	printf("\n");
-	for(int mergeIdx = 2; mergeIdx < frames*2; mergeIdx*=2){//This is a tree-based multiply together algorithm to avoid frame favoritism from imprecise multiplication
-		for(int idx = 0; idx < frames; idx+=mergeIdx){
-			if(idx+mergeIdx/2 < frames){
-				quality[idx] *= quality[idx+mergeIdx/2];
-			}
-		}
-	}
-	printf("Overall quality(arbitrary overall): %e\n", quality[0]);
-	//
-	*/
 	puts("Creating STL.");
 	makeStl(volume);
 	puts("STL Created.");

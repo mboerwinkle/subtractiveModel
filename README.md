@@ -6,19 +6,22 @@ Using turntable and single webcam, subtractively model objects on inverted backg
 ## BUILDING
 From base directory:
 ```
-cmake .
+mkdir release
+cd release
+cmake -DCMAKE_BUILD_TYPE=Release ..
 make
 ``` 
 
 ## RUNNING
-`./subtractiveModel VIDEO_SRC_IDX FRAMES DIST_TO_CENTER VOLUME_SIDE_LENGTH MODEL_RESOLUTION`
+`./subtractiveModel VIDEO_SRC_IDX FRAMES DIST_TO_CENTER VOLUME_SIDE_LENGTH MODEL_RESOLUTION ITER_LIMIT`
 * `VIDEO_SRC_IDX`: OpenCV camera ID. If you only have one camera, specify 0.
 * `FRAMES`: The number of silhouette images you want to grab.
 * `DIST_TO_CENTER`: The distance from the camera to the center of the object you are rotating. This is arbitrary units, but must be the same as 'VOLUME_SIDE_LENGTH'.
 * `VOLUME_SIDE_LENGTH`: What size is the object you are imaging? This parameter specifies the length of one edge of a bounding cube centered at the camera height and axis of rotation.
 * `MODEL_RESOLUTION`: How detailed do you want your model? Higher values are more resolution in the final model, but take longer to process.
+* `ITER_LIMIT`: How many iterations should it try to correct for imprecise camera placement? It will eventually end on its own, but if you want to set the number of iterations, you can. Otherwise, 1000 is a safe bet.
 
-EX. `./subtractiveModel 0 12 30 10 500`
+EX. `./subtractiveModel 0 12 30 10 500 1000`
 
 ## BASIC HOW TO USE:
 * Set up a softly lit background. A sheet of paper with a lamp shining on it works well.

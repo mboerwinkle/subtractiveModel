@@ -2,7 +2,7 @@
 #define CAMERA_H
 #include <semaphore.h>
 #include <opencv2/opencv.hpp>
-#include <opencv2/highgui.hpp>
+#include <opencv2/highgui/highgui.hpp>
 using namespace cv;
 class Camera{
 public:
@@ -16,7 +16,7 @@ public:
 	//Quickly grabs the next frame...
 	void grabFrame();
 	void showDark();
-	int darkThreshold = 150;
+	int darkThreshold = 100;
 	Mat CameraMatrix;
 	Mat NewCameraMatrix;
 	Mat DistortionCoef;

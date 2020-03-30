@@ -3,7 +3,7 @@
 #include <string.h>
 #include "hillClimb.h"
 
-double* hillClimb(int axes, double* min, double* max, double* step, void* extraData, double (*fitness)(void*, double*)){//Fixme save already computed domain stuff.
+double* hillClimb(int axes, double* min, double* max, double* step, void* extraData, double (*fitness)(void*, double*), int maxIterations){//Fixme save already computed domain stuff.
 	double* ret = (double*)calloc(axes, sizeof(double));
 	for(int a = 0; a < axes; a++){
 		ret[a] = (min[a]+max[a])/2.0;
@@ -14,17 +14,23 @@ double* hillClimb(int axes, double* min, double* max, double* step, void* extraD
 	int improved = 1;//did we improve this iteration?
 	int testAxis = 0;//This keeps us from improving in just one axis the whole time.
 	int testDirection = 1;//This keeps us from just improving one direction the whole time.
-	while(improved){
+	int iterations = 0;
+	while(improved && iterations < maxIterations){
 		improved = 0;
 		int startAxis = testAxis;//This is the axis we are starting with. Once we return here, we know we did the whole thing.
 		int startDirection = testDirection;
 		do{
+			if(iterations >= maxIterations){
+				break;
+			}
 			memcpy(test, ret, axes*sizeof(double));//Reset all the axes to the best available
 			test[testAxis] += testDirection*step[testAxis];//Change the selected axis
 			if(test[testAxis] < min[testAxis] || test[testAxis] > max[testAxis]){
 				printf("Hillclimb: Warning exceeded hillclimb domain (Axis: %d, Value: %lf)\n", testAxis, test[testAxis]);
 			}
 			double testScore = fitness(extraData, test);
+			iterations++;
+
 			printf("Hillclimb: (%lf", test[0]);
 			for(int pIdx = 1; pIdx < axes; pIdx++){
 				printf(" %lf", test[pIdx]);
@@ -44,7 +50,7 @@ double* hillClimb(int axes, double* min, double* max, double* step, void* extraD
 				maxScore = testScore;
 				memcpy(ret, test, axes*sizeof(double));
 				improved = 1;
-				printf("***\n", maxScore);
+				printf("***\n");
 				break;
 			}else printf("\n");
 		}while(startAxis != testAxis || startDirection != testDirection);
