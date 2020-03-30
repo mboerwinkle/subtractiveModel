@@ -145,14 +145,26 @@ void Camera::getVec(double angle, double x, double y, double* out){
  * 	y/z = (V - Cy) / fy
 */
 
-void Camera::getVec(double angle, double U, double V, double* out){
+void Camera::getVec(double angle, double U, double V, double* out, double corrAxisX, double corrAxisY){
 	
 	//z is 1. "vec[0]" is really x/z, "vec[1]" is y/z.
 	double vec[3];
-	vec[0] = (double)(U - width/2) / newCmValues[0];
+	vec[0] = (double)(U - width/2) / newCmValues[0];//FIXME should use NewCameraMatrix.at
 	vec[1] = (double)(V - height/2) / newCmValues[4];
 	vec[2] = 1;
 	//now vec is the vector with 'z' pointing straight out of the camera.
+	
+	//perform rotation around z pointing out of camera by corrAxisX. I am doing these rotations in the wrong order, but this way I can fudge the rotation around the z axis since it is still '1'
+	double nv0 = cos(corrAxisX)*vec[0] - sin(corrAxisX)*vec[1];
+	double nv1 = sin(corrAxisX)*vec[0] + cos(corrAxisX)*vec[1];
+	vec[0] = nv0;
+	vec[1] = nv1;
+	
+	//perform up/down correction with corrAxisY
+	nv1 = cos(corrAxisY)*vec[1] - sin(corrAxisY)*vec[2];
+	double nv2 = sin(corrAxisY)*vec[1] + cos(corrAxisY)*vec[2];
+	vec[1] = nv1;
+	vec[2] = nv2;
 	
 	norm((double*)vec);
 	//now vec is a unit vector.

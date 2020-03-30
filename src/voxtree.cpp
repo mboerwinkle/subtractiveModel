@@ -11,7 +11,7 @@ extern double dot(double* v1, double* v2);
 
 Voxtree::Voxtree(int size){
 	int realSize = equalOrGreaterPow2(size);
-	printf("Voxel cube dimension: %d\n", realSize);
+	//printf("Voxel cube dimension: %d\n", realSize);
 	this->size = realSize;
 	root = new Voxnode(this->size);
 }

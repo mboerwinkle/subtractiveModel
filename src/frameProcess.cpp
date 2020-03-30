@@ -5,8 +5,7 @@
 extern Camera cam;
 extern double distToCenter;
 extern double volumeSideLen;
-extern int ProgressX;
-void frameProcess(Voxtree* volume, char* camview, double angle){
+void frameProcess(Voxtree* volume, char* camview, double angle, double corrDistToCenter, double corrHorizOffset, double corrAxisX, double corrAxisY){
 	/*
 	* Coord = camera coordinates as far as the volume is concerned.
 	* size = size of the volume (e.g. 512)
@@ -17,12 +16,11 @@ void frameProcess(Voxtree* volume, char* camview, double angle){
 	*/
 	char* view = (char*)calloc(cam.width*cam.height, sizeof(char));
 	memcpy(view, camview, cam.width*cam.height*sizeof(char));
-	double camPosX = cos(angle)*  distToCenter*(double)(volume->size)/volumeSideLen;
-	double camPosY = sin(angle)*  distToCenter*(double)(volume->size)/volumeSideLen;
+	double camPosX = (cos(angle)* corrDistToCenter*distToCenter - sin(angle)*corrHorizOffset)*(double)(volume->size)/volumeSideLen;
+	double camPosY = (sin(angle)* corrDistToCenter*distToCenter + cos(angle)*corrHorizOffset)*(double)(volume->size)/volumeSideLen;
 	double camPosZ = 0;
-	printf("Camera Coordinates: %.3lf %.3lf %.3lf\n", camPosX, camPosY, camPosZ);
+	//printf("Camera Coordinates: %.3lf %.3lf %.3lf\n", camPosX, camPosY, camPosZ);
 	for(int x = 0; x < cam.width; x++){
-		ProgressX = x;
 		for(int y = 0; y < cam.height; y++){
 			if(view[x+y*cam.width]){//cut out this vector
 				//Try to get a pyramid with more than one pixel
@@ -50,10 +48,10 @@ void frameProcess(Voxtree* volume, char* camview, double angle){
 				//
 				double v1[3], v2[3], v3[3], v4[3];
 				double *v[4] = {v1, v2, v3, v4};
-				cam.getVec(angle, (double)(x+diag+1), (double)(y+diag+1), v1);//vectors are from the near corner of x, y to the far corner of x+diag, y+diag.
-				cam.getVec(angle, (double)(x+diag+1), (double)y, v2);
-				cam.getVec(angle, (double)x, (double)y, v3);
-				cam.getVec(angle, (double)x, (double)(y+diag+1), v4);
+				cam.getVec(angle, (double)(x+diag+1), (double)(y+diag+1), v1, corrAxisX, corrAxisY);//vectors are from the near corner of x, y to the far corner of x+diag, y+diag.
+				cam.getVec(angle, (double)(x+diag+1), (double)y, v2, corrAxisX, corrAxisY);
+				cam.getVec(angle, (double)x, (double)y, v3, corrAxisX, corrAxisY);
+				cam.getVec(angle, (double)x, (double)(y+diag+1), v4, corrAxisX, corrAxisY);
 				volume->deletePyramidIntersections(camPosX+volume->size/2, camPosY+volume->size/2, camPosZ+volume->size/2, v);//the +volume->size/2 is because these voxels are counted from their corners.
 			}
 		}
@@ -61,9 +59,9 @@ void frameProcess(Voxtree* volume, char* camview, double angle){
 	}
 	free(view);
 }
-extern double checkFrameQuality(Voxtree *volume, char* view, double angle){
-	double camPosX = cos(angle)*  distToCenter*(double)(volume->size)/volumeSideLen;
-	double camPosY = sin(angle)*  distToCenter*(double)(volume->size)/volumeSideLen;
+extern double checkFrameQuality(Voxtree *volume, char* view, double angle, double corrDistToCenter, double corrHorizOffset, double corrAxisX, double corrAxisY){
+	double camPosX = (cos(angle)* corrDistToCenter*distToCenter - sin(angle)*corrHorizOffset)*(double)(volume->size)/volumeSideLen;
+	double camPosY = (sin(angle)* corrDistToCenter*distToCenter + cos(angle)*corrHorizOffset)*(double)(volume->size)/volumeSideLen;
 	double camPosZ = 0;
 	int targetPixCount = 0;//This is how many pixels we want to intersect a block.
 	int fulfilledPixCount = 0;//This is how many pixels actually intersect a block.
@@ -72,10 +70,10 @@ extern double checkFrameQuality(Voxtree *volume, char* view, double angle){
 			if(!view[x+y*cam.width]){//this vector should not have gotten cut
 				double v1[3], v2[3], v3[3], v4[3];
 				double *v[4] = {v1, v2, v3, v4};
-				cam.getVec(angle, (double)(x+1), (double)(y+1), v1);//vectors are from the near corner of x, y to the far corner of x, y
-				cam.getVec(angle, (double)(x+1), (double)y, v2);
-				cam.getVec(angle, (double)x, (double)y, v3);
-				cam.getVec(angle, (double)x, (double)(y+1), v4);
+				cam.getVec(angle, (double)(x+1), (double)(y+1), v1, corrAxisX, corrAxisY);//vectors are from the near corner of x, y to the far corner of x, y
+				cam.getVec(angle, (double)(x+1), (double)y, v2, corrAxisX, corrAxisY);
+				cam.getVec(angle, (double)x, (double)y, v3, corrAxisX, corrAxisY);
+				cam.getVec(angle, (double)x, (double)(y+1), v4, corrAxisX, corrAxisY);
 				int intersects = volume->doesPyramidIntersectFull(camPosX+volume->size/2, camPosY+volume->size/2, camPosZ+volume->size/2, v);//the +volume->size/2 is because these voxels are counted from their corners.
 				if(intersects != -1){//-1 means this ray doesn't even intersect with the biggest level of volume
 					targetPixCount++;

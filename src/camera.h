@@ -31,7 +31,7 @@ public:
 	int getGreen(int x, int y);
 	int getComp(int x, int y, char c);
 	int getBrightness(int x, int y);
-	void getVec(double angle, double x, double y, double* out);
+	void getVec(double angle, double x, double y, double* out, double corrAxisX, double corrAxisY);
 	//void getVec(double angle, double U, double V, double* out);
 private:
 	cv::VideoCapture cam;

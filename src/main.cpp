@@ -7,6 +7,7 @@
 #include "camera.h"
 #include "voxtree.h"
 #include "delay.h"
+#include "hillClimb.h"
 using namespace cv;
 extern int totalNodeCount;
 extern int peakNodeCount;
@@ -15,7 +16,6 @@ double distToCenter = 3520/2;
 double volumeSideLen = 0;
 int frames = 0;//This is the number of frames we want to take.
 int frameIdx = -1;//This is the frame currently being processed.
-int ProgressX = 0;//This is used to give updates about the processing progress.
 int modelRes = 0;//This is based on a user-provided argument. It is used in the Voxtree constructor.
 
 Camera cam;
@@ -24,8 +24,10 @@ bool stillCapturing = true;
 void* frameCapture(void *null);
 
 extern void makeStl(Voxtree* volume);
-extern void frameProcess(Voxtree *volume, char* camview, double angle);
-extern double checkFrameQuality(Voxtree *volume, char* view, double angle);
+extern void frameProcess(Voxtree *volume, char* camview, double angle, double corrDistToCenter, double corrHorizOffset, double corrAxisX, double corrAxisY);
+extern double checkFrameQuality(Voxtree *volume, char* view, double angle, double corrDistToCenter, double corrHorizOffset, double corrAxisX, double corrAxisY);
+Voxtree* createModel(char** view, double corrDistToCenter, double corrHorizOffset, double corrAxisX, double corrAxisY);
+double getCorrectionScore(void* view_void, double* args);
 int main(int argc, char *argv[]){
 	if(argc != 6){
 		printf("USAGE: ./subtractiveModel VIDEO_SRC_IDX FRAMES DIST_TO_CENTER VOLUME_SIDE_LENGTH MODEL_RESOLUTION (ex. \"./subtractiveModel 0 12 90.0 40.0 500\"\n");
@@ -70,12 +72,8 @@ int main(int argc, char *argv[]){
 	}
 	cam.deleteFeed();
 
-	printf("Frame gathering complete. Press enter to view completion.\n");
-	while(1){
-		getchar();
-		printf("Frame %d: X Progress: %d/%d\n", frameIdx, ProgressX, cam.width);
-	}
-	//pthread_join(frameCapThread, NULL);
+	printf("Frame gathering complete.\n");
+	pthread_join(frameCapThread, NULL);
 }
 
 void* frameCapture(void *null){
@@ -99,8 +97,27 @@ void* frameCapture(void *null){
 
 	}
 	stillCapturing = false;
-	Voxtree *volume = new Voxtree(modelRes);
+
+	/*Possible inaccuracies to be corrected via hill-climbing:
+	 * Inaccurate distToCenter (search idx 0)
+	 * Camera Center vector does not intersect rotation axis (search idx 1)
+	 * Rotation axis is not parallel to axis protruding from top of camera (search idx 2 and 3)
+	 */
 	
+	double min[4]=	{0.9, -(distToCenter*0.01*((double)cam.width)/cam.NewCameraMatrix.at<double>(0)), -0.1745329, -0.1745329};
+	//distToCenter multiplier (can be off by +-10%)
+	//center vector can be off by +-1% of the camera width
+	//rotation axis can be off by 10 degrees (That is, 10 degrees camera rotation around fixed distant point, or 10 degrees camera looking up or down. It is important to perform the looking up or down translation first.
+	double max[4]=	{1.1, -min[1], -min[2], -min[3]};
+	double step[4];
+	for(int idx = 0; idx < 4; idx++){
+		step[idx] = (max[idx]-min[idx])/20.0;
+	}
+	double* optimal = hillClimb(4, min, max, step, view, &getCorrectionScore);
+	Voxtree *volume = createModel(view, optimal[0], optimal[1], optimal[2], optimal[3]);
+	/*
+	//
+	Voxtree *volume = new Voxtree(modelRes);
 	for(frameIdx = 0; frameIdx < frames; frameIdx++){
 		double angle = frameIdx*2*M_PI/frames;
 		frameProcess(volume, view[frameIdx], angle);
@@ -113,7 +130,7 @@ void* frameCapture(void *null){
 		double angle = frameIdx*2*M_PI/frames;
 		quality[frameIdx] = checkFrameQuality(volume, view[frameIdx], angle);
 	}
-	printf("Qualities: %lf", quality[0]);
+	printf("Qualities(percent 'there' pixels that are still occluded): %lf", quality[0]);
 	for(int qIdx = 1; qIdx < frames; qIdx++){
 		printf(", %lf", quality[qIdx]);
 	}
@@ -125,12 +142,47 @@ void* frameCapture(void *null){
 			}
 		}
 	}
-	printf("Overall quality: %lf\n", quality[0]);
+	printf("Overall quality(arbitrary overall): %e\n", quality[0]);
+	//
+	*/
 	puts("Creating STL.");
 	makeStl(volume);
 	puts("STL Created.");
+	delete volume;
 	return NULL;
 }
+double getCorrectionScore(void* view_void, double* args){
+	char** view = (char**) view_void;
+	double corrDistToCenter = args[0];
+	double corrHorizOffset = args[1];
+	double corrAxisX = args[2];
+	double corrAxisY = args[3];
+	Voxtree* volume = createModel(view, corrDistToCenter, corrHorizOffset, corrAxisX, corrAxisY);
+	double quality[frames];
+	for(frameIdx = 0; frameIdx < frames; frameIdx++){
+		double angle = frameIdx*2*M_PI/frames;
+		quality[frameIdx] = checkFrameQuality(volume, view[frameIdx], angle, corrDistToCenter, corrHorizOffset, corrAxisX, corrAxisY);
+	}
+	for(int mergeIdx = 2; mergeIdx < frames*2; mergeIdx*=2){//This is a tree-based multiply together algorithm to avoid frame favoritism from imprecise multiplication (accumulates in quality[0])
+		for(int idx = 0; idx < frames; idx+=mergeIdx){
+			if(idx+mergeIdx/2 < frames){
+				quality[idx] *= quality[idx+mergeIdx/2];
+			}
+		}
+	}
+	delete volume;
+	return quality[0];
+}
+
+Voxtree* createModel(char** view, double corrDistToCenter, double corrHorizOffset, double corrAxisX, double corrAxisY){
+	Voxtree *volume = new Voxtree(modelRes);
+	for(frameIdx = 0; frameIdx < frames; frameIdx++){
+		double angle = frameIdx*2*M_PI/frames;
+		frameProcess(volume, view[frameIdx], angle, corrDistToCenter, corrHorizOffset, corrAxisX, corrAxisY);
+	}
+	return volume;
+}
+
 void norm(double* v){
 	double d = sqrt(v[0]*v[0]+v[1]*v[1]+v[2]*v[2]);
 	v[0]/=d;
