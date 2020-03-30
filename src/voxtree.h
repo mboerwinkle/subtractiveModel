@@ -9,6 +9,7 @@ typedef struct plane{
 class Voxtree{
 public:
 	Voxtree(int size);
+	~Voxtree();
 	static int equalOrGreaterPow2(int target);
 	int get(int x, int y, int z);
 	int size;

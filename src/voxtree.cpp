@@ -2,8 +2,8 @@
 #include <stdlib.h>
 #include <math.h>
 #include "voxtree.h"
-int totalNodeCount = 0;
-int peakNodeCount = 0;
+//int totalNodeCount = 0;
+//int peakNodeCount = 0;
 extern void norm(double* v);
 extern void cross(double* tv, double* v1, double* v2);
 extern double dot(double* v1, double* v2);
@@ -14,6 +14,9 @@ Voxtree::Voxtree(int size){
 	//printf("Voxel cube dimension: %d\n", realSize);
 	this->size = realSize;
 	root = new Voxnode(this->size);
+}
+Voxtree::~Voxtree(){
+	delete root;
 }
 int Voxtree::equalOrGreaterPow2(int target){
 	int realSize = 1;
@@ -52,14 +55,14 @@ int Voxtree::get(int x, int y, int z){
 	return root->get(x, y, z);
 }
 Voxnode::Voxnode(int size){
-	totalNodeCount++;
+	/*totalNodeCount++;
 	if(totalNodeCount > peakNodeCount){
 		peakNodeCount = totalNodeCount;
-	}
+	}*/
 	this->size = size;
 }
 Voxnode::~Voxnode(){
-	totalNodeCount--;
+	//totalNodeCount--;
 	for(int quadIdx = 0; quadIdx < 8; quadIdx++){
 		if(sub[quadIdx] != (Voxnode*)NULL){
 			//puts("all nodes should be freed by the time of deletion!");

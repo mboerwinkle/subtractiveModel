@@ -33,8 +33,11 @@ int main(int argc, char *argv[]){
 		printf("USAGE: ./subtractiveModel VIDEO_SRC_IDX FRAMES DIST_TO_CENTER VOLUME_SIDE_LENGTH MODEL_RESOLUTION (ex. \"./subtractiveModel 0 12 90.0 40.0 500\"\n");
 		return 1;
 	}
-
-	cam.assignFeed(atoi(argv[1]));
+	int camIdx = atoi(argv[1]);
+	if(camIdx == -1){
+	}else{
+		cam.assignFeed();
+	}
 	sscanf(argv[2], "%d", &frames);
 	sscanf(argv[3], "%lf", &distToCenter);
 	sscanf(argv[4], "%lf", &volumeSideLen);
